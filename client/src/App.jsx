@@ -21,7 +21,6 @@ import LessonDetail from './pages/LessonDetail';
 import Quiz from './pages/Quiz';
 import Progress from './pages/Progress';
 import Leaderboard from './pages/Leaderboard';
-import Lara from './pages/Lara';
 
 const AnimatedRoutes = () => {
     const location = useLocation();
@@ -38,7 +37,6 @@ const AnimatedRoutes = () => {
                 <Route path="/quiz/:id" element={<Quiz />} />
                 <Route path="/progress" element={<Progress />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
-                <Route path="/lara" element={<Lara />} />
             </Routes>
         </AnimatePresence>
     );
