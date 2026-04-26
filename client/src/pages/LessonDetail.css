@@ -1,0 +1,258 @@
+.lesson-detail-header {
+    margin-bottom: 24px;
+}
+
+.lesson-detail-header h1 {
+    margin-bottom: 6px;
+}
+
+.lesson-progress-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 32px;
+}
+
+/* Flashcard */
+.flashcard-area {
+    max-width: 560px;
+    margin: 0 auto 48px;
+}
+
+.flashcard {
+    perspective: 1000px;
+    cursor: pointer;
+    height: 320px;
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.flashcard-front,
+.flashcard-back {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 32px;
+    background: var(--bg-glass);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    backface-visibility: hidden;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.flashcard-back {
+    transform: rotateY(180deg);
+}
+
+.flashcard.flipped .flashcard-front {
+    transform: rotateY(180deg);
+}
+
+.flashcard.flipped .flashcard-back {
+    transform: rotateY(0deg);
+}
+
+.flashcard-word {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    font-weight: 800;
+    text-align: center;
+}
+
+.flashcard-pronunciation {
+    color: var(--secondary);
+    font-size: 1rem;
+    font-style: italic;
+}
+
+.flashcard-translation {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-align: center;
+}
+
+.flashcard-example {
+    text-align: center;
+    margin-top: 8px;
+}
+
+.example-text {
+    font-weight: 500;
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+
+.example-translation {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    font-style: italic;
+}
+
+.flashcard-hint {
+    position: absolute;
+    bottom: 16px;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+.speak-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    color: var(--secondary);
+}
+
+.flashcard-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+/* Grammar */
+.grammar-section {
+    margin-bottom: 40px;
+}
+
+.grammar-section h3 {
+    font-family: var(--font-display);
+    margin-bottom: 16px;
+    font-size: 1.2rem;
+}
+
+.grammar-card {
+    margin-bottom: 12px;
+}
+
+.grammar-card h4 {
+    color: var(--secondary);
+    margin-bottom: 8px;
+}
+
+.grammar-card p {
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.grammar-examples {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.grammar-example {
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    border-left: 3px solid var(--primary);
+}
+
+/* Vocab Table */
+.vocab-table-section {
+    margin-bottom: 40px;
+}
+
+.vocab-table-section h3 {
+    font-family: var(--font-display);
+    margin-bottom: 16px;
+    font-size: 1.2rem;
+}
+
+.vocab-table {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.vocab-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr;
+    gap: 16px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border-light);
+    align-items: center;
+}
+
+.vocab-row:last-child {
+    border-bottom: none;
+}
+
+.vocab-header {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.speak-inline {
+    background: none;
+    color: var(--secondary);
+    cursor: pointer;
+    margin-left: 6px;
+    vertical-align: middle;
+    padding: 2px;
+    transition: color var(--transition-fast);
+}
+
+.speak-inline:hover {
+    color: var(--primary);
+}
+
+/* CTA */
+.lesson-cta {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.cta-card {
+    text-align: center;
+    padding: 40px;
+}
+
+.cta-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+}
+
+.cta-card p {
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
+
+@media (max-width: 640px) {
+    .flashcard {
+        height: 280px;
+    }
+
+    .flashcard-word {
+        font-size: 1.8rem;
+    }
+
+    .flashcard-translation {
+        font-size: 1.5rem;
+    }
+
+    .vocab-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .vocab-row span:nth-child(3) {
+        display: none;
+    }
+
+    .vocab-header span:nth-child(3) {
+        display: none;
+    }
+}

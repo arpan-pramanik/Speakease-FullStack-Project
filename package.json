@@ -1,0 +1,16 @@
+{
+    "name": "speakease-root",
+    "version": "1.0.0",
+    "description": "Root package for SpeakEase Language Learning Platform",
+    "scripts": {
+        "dev:server": "cd server && npm run dev",
+        "dev:client": "cd client && npm run dev",
+        "dev:db": "rm -f ./.mongodb/mongod.lock && mongod --dbpath ./.mongodb",
+        "dev": "npx concurrently \"npm run dev:db\" \"npm run dev:server\" \"npm run dev:client\"",
+        "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+        "seed": "cd server && npm run seed"
+    },
+    "devDependencies": {
+        "concurrently": "^9.2.1"
+    }
+}
