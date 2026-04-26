@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { chatWithGemini } from '../services/gemini';
+import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../context/AuthContext';
 import { IconSparkles, IconSend, IconX } from './Icons';
 
@@ -120,7 +121,23 @@ export const AIChat = ({ isVisible, onClose }) => {
                                     color: 'var(--text-color)'
                                 }}
                             >
-                                {msg.text}
+                                <ReactMarkdown
+                                    components={{
+                                        p: ({ node, ...props }) => <p style={{ margin: 0, marginBottom: '0.4rem' }} {...props} />,
+                                        ul: ({ node, ...props }) => <ul style={{ paddingLeft: '1.2rem', margin: '0.4rem 0' }} {...props} />,
+                                        ol: ({ node, ...props }) => <ol style={{ paddingLeft: '1.2rem', margin: '0.4rem 0' }} {...props} />,
+                                        li: ({ node, ...props }) => <li style={{ marginBottom: '0.2rem' }} {...props} />,
+                                        strong: ({ node, ...props }) => <strong style={{ color: 'var(--accent-color)' }} {...props} />,
+                                        code: ({ node, ...props }) => <code style={{
+                                            background: 'rgba(255,255,255,0.1)',
+                                            padding: '2px 4px',
+                                            borderRadius: '4px',
+                                            fontFamily: 'monospace'
+                                        }} {...props} />,
+                                    }}
+                                >
+                                    {msg.text}
+                                </ReactMarkdown>
                             </motion.div>
                         ))}
                         {isLoading && (
