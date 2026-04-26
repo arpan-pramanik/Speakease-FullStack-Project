@@ -2,7 +2,6 @@
 
 SpeakEase is a high-fidelity, immersive language learning platform that combines cinematic UI/UX with modern AI to create a truly engaging education experience.
 
-![Dashboard Preview](https://img.stackshare.io/service_logos/vite.png)
 
 ## Features
 
