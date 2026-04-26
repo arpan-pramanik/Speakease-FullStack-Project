@@ -233,7 +233,34 @@ export const Navigation = () => {
                             </motion.div>
                         ))}
 
-                        {/* AI Mode Toggle moved up or similar - keeping menu clean */}
+                        {/* AI Chat shortcut in menu */}
+                        {isAIMode && user && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 50 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 + navLinks.length * 0.1, duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
+                            >
+                                <button
+                                    onClick={() => { setShowChat(true); toggleMenu(); }}
+                                    style={{
+                                        fontFamily: 'var(--font-display)',
+                                        fontSize: '6vw', fontWeight: 800,
+                                        textTransform: 'uppercase',
+                                        color: 'var(--accent-color)',
+                                        background: 'none', border: 'none',
+                                        cursor: 'pointer', lineHeight: 0.9,
+                                        transition: 'all 0.3s',
+                                        textShadow: '0 0 30px rgba(196, 240, 0, 0.3)'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05) skewX(-5deg)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+                                >
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <IconSparkles size={32} color="var(--accent-color)" /> AI CHAT
+                                    </span>
+                                </button>
+                            </motion.div>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>

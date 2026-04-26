@@ -2,18 +2,18 @@
 
 SpeakEase is a high-fidelity, immersive language learning platform that combines cinematic UI/UX with modern AI to create a truly engaging education experience.
 
-![Dashboard Preview](https://img.stackshare.io/service_logos/vite.png) <!-- Placeholder for actual screenshot if available -->
+![Dashboard Preview](https://img.stackshare.io/service_logos/vite.png)
 
-## ✨ Features
+## Features
 
 - **Immersive 3D/Cinematic UI**: Built with React, Framer Motion, and custom Web Audio for a premium "theatre-like" experience.
-- **AI-Powered Curriculum**: Dynamic lesson and quiz generation powered by **Mistral AI**.
+- **AI-Powered Curriculum**: Dynamic lesson and quiz generation powered by Mistral AI.
 - **Interactive Exercises**: Support for multiple exercise types including multiple choice, fill-in-the-blanks, sentence formation, and matching.
 - **Progress Tracking**: Real-time tracking of XP, levels, and learning streaks.
 - **Global Leaderboard**: Compete with other learners worldwide.
 - **AI Chatbot**: A friendly AI tutor always available for advice and conversation.
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -21,7 +21,7 @@ SpeakEase is a high-fidelity, immersive language learning platform that combines
 - **MongoDB** (Local or Atlas)
 - **Mistral API Key**
 
-### 🔑 Getting a Mistral API Key
+### Getting a Mistral API Key
 
 1. Go to the [Mistral AI Console](https://console.mistral.ai/).
 2. Create an account or sign in.
@@ -29,7 +29,7 @@ SpeakEase is a high-fidelity, immersive language learning platform that combines
 4. Click **Create new key**.
 5. Copy the key immediately (you won't be able to see it again).
 
-### 🛠️ Installation & Setup
+### Installation & Setup
 
 1. **Clone the repository**:
    ```bash
@@ -74,13 +74,13 @@ SpeakEase is a high-fidelity, immersive language learning platform that combines
    npm run dev
    ```
 
-## 🏗️ Tech Stack
+## Tech Stack
 
 - **Frontend**: Vite, React, Framer Motion, Lenis Scroll.
 - **Backend**: Node.js, Express, MongoDB, Mongoose.
 - **AI Engine**: Mistral AI (Small & Large models).
 - **Authentication**: JWT, Google OAuth.
 
-## 📄 License
+## License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.

@@ -4,7 +4,7 @@ Detailed breakdown of the SpeakEase architecture, technical stack, and developme
 
 ---
 
-## 🏛️ Architecture Overview
+## Architecture Overview
 
 SpeakEase follows a modern MERN (MongoDB, Express, React, Node) architecture with a heavy focus on immersive frontend experiences and AI-driven content generation.
 
@@ -19,7 +19,7 @@ graph TD
 
 ---
 
-## 🛠️ Technical Stack
+## Technical Stack
 
 ### Frontend Architecture
 - **Framework**: React 18+ with Vite for ultra-fast development.
@@ -36,7 +36,7 @@ graph TD
 
 ---
 
-## 🤖 AI Curriculum Engine
+## AI Curriculum Engine
 
 The core value of SpeakEase is its ability to generate curricula dynamically.
 
@@ -47,7 +47,7 @@ The core value of SpeakEase is its ability to generate curricula dynamically.
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ### Root
 - `/client`: Frontend source code.
@@ -66,7 +66,7 @@ The core value of SpeakEase is its ability to generate curricula dynamically.
 
 ---
 
-## 🔄 Development Workflow
+## Development Workflow
 
 1. **Environment Setup**: Define secrets in local `.env` files (never pushed to GitHub).
 2. **Concurrent Operation**: Run `npm run dev` at the root to start both Vite and Express.
@@ -74,7 +74,7 @@ The core value of SpeakEase is its ability to generate curricula dynamically.
 
 ---
 
-## ⚖️ Security Best Practices
+## Security Best Practices
 
 - **Zero-Key Leakage**: All API keys and secrets are exclusively loaded via environment variables.
 - **Input Sanitization**: Mongoose provides built-in protection against common injection patterns.
