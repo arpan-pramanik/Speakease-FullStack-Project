@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getLesson, completeLesson, getQuizzesByLesson } from '../services/api';
@@ -192,7 +193,16 @@ Keep it concise.`,
                                     <IconSparkles size={14} color="var(--accent-color)" />
                                     <span style={{ color: 'var(--accent-color)', fontSize: '0.8rem', letterSpacing: '0.15em' }}>AI EXPLANATION</span>
                                 </div>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{aiExplanation}</p>
+                                <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                                    <ReactMarkdown
+                                        components={{
+                                            p: ({ node, ...props }) => <p style={{ margin: 0, marginBottom: '0.6rem' }} {...props} />,
+                                            strong: ({ node, ...props }) => <strong style={{ color: 'var(--accent-color)' }} {...props} />,
+                                        }}
+                                    >
+                                        {aiExplanation}
+                                    </ReactMarkdown>
+                                </div>
                             </motion.div>
                         )}
 
@@ -266,7 +276,18 @@ Keep it concise.`,
                                     <IconSparkles size={14} color="var(--accent-color)" />
                                     <span style={{ color: 'var(--accent-color)', fontSize: '0.8rem', letterSpacing: '0.15em' }}>AI PRACTICE</span>
                                 </div>
-                                <pre style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', fontFamily: 'var(--font-body)' }}>{aiSentences}</pre>
+                                <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                                    <ReactMarkdown
+                                        components={{
+                                            p: ({ node, ...props }) => <p style={{ margin: 0, marginBottom: '0.6rem' }} {...props} />,
+                                            strong: ({ node, ...props }) => <strong style={{ color: 'var(--accent-color)' }} {...props} />,
+                                            ol: ({ node, ...props }) => <ol style={{ paddingLeft: '1.2rem', margin: '0.6rem 0' }} {...props} />,
+                                            li: ({ node, ...props }) => <li style={{ marginBottom: '0.4rem' }} {...props} />,
+                                        }}
+                                    >
+                                        {aiSentences}
+                                    </ReactMarkdown>
+                                </div>
                             </motion.div>
                         )}
                     </div>
