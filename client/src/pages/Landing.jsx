@@ -65,8 +65,7 @@ const Landing = () => {
                         fontWeight: 900,
                         lineHeight: 0.8,
                         textAlign: 'center',
-                        color: 'transparent',
-                        WebkitTextStroke: '2px var(--text-muted)',
+                        color: 'var(--text-color)',
                         mixBlendMode: 'difference',
                         zIndex: 10
                     }}
@@ -108,7 +107,7 @@ const Landing = () => {
                             mixBlendMode: 'difference'
                         }}
                     >
-                        A spatial journey through grammar, sound, and culture. Not a course, an expedition.
+                        Learn languages through immersive lessons and AI-powered practice.
                     </p>
                     <div ref={actionRef} style={{ marginTop: '3rem' }} className="interactive">
                         <Link
@@ -137,7 +136,7 @@ const Landing = () => {
                                 e.currentTarget.style.transform = 'scale(1)';
                             }}
                         >
-                            Enter The Portal
+                            Start Learning
                         </Link>
                     </div>
                 </div>

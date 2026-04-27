@@ -23,13 +23,13 @@ export const Navigation = () => {
     };
 
     const navLinks = user ? [
-        { title: 'The Atlas', path: '/dashboard' },
+        { title: 'Dashboard', path: '/dashboard' },
         { title: 'Languages', path: '/languages' },
-        { title: 'Resonance', path: '/progress' },
-        { title: 'Network', path: '/leaderboard' },
+        { title: 'Progress', path: '/progress' },
+        { title: 'Leaderboard', path: '/leaderboard' },
     ] : [
         { title: 'Home', path: '/' },
-        { title: 'The Portal', path: '/login' },
+        { title: 'Login', path: '/login' },
     ];
 
     return (
@@ -216,7 +216,6 @@ export const Navigation = () => {
                                         color: 'var(--text-color)',
                                         textDecoration: 'none',
                                         lineHeight: 0.9,
-                                        WebkitTextStroke: '1px transparent',
                                         transition: 'color 0.3s'
                                     }}
                                     onMouseEnter={(e) => {

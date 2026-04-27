@@ -23,9 +23,9 @@ const Dashboard = () => {
     }, [isAIMode]);
 
     const cards = [
-        { title: 'Languages', desc: 'Choose your destination.', path: '/languages', icon: <IconGlobe size={28} color="var(--accent-color)" /> },
-        { title: 'Resonance', desc: 'Track your sync rate and progress.', path: '/progress', icon: <IconXP size={28} color="var(--accent-color)" /> },
-        { title: 'Network', desc: 'Connect with other travelers.', path: '/leaderboard', icon: <IconTrophy size={28} color="var(--accent-color)" /> },
+        { title: 'Languages', desc: 'Choose a language to learn.', path: '/languages', icon: <IconGlobe size={28} color="var(--accent-color)" /> },
+        { title: 'Progress', desc: 'View your learning statistics.', path: '/progress', icon: <IconXP size={28} color="var(--accent-color)" /> },
+        { title: 'Leaderboard', desc: 'Compete with the community.', path: '/leaderboard', icon: <IconTrophy size={28} color="var(--accent-color)" /> },
     ];
 
     return (
@@ -39,10 +39,10 @@ const Dashboard = () => {
             <div style={{ padding: '5vw' }}>
                 <h3 style={{ color: 'var(--accent-color)', fontSize: '1.2rem', letterSpacing: '0.2em', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {isAIMode && <IconSparkles size={20} color="var(--accent-color)" />}
-                    ENTITY: {user?.name || 'TRAVELER'}
+                    USER: {user?.name?.toUpperCase() || 'STUDENT'}
                 </h3>
-                <h1 style={{ fontSize: '10vw', lineHeight: 0.85, marginBottom: '2rem', color: 'transparent', WebkitTextStroke: '2px var(--text-color)' }}>
-                    THE ATLAS
+                <h1 style={{ fontSize: '10vw', lineHeight: 0.85, marginBottom: '2rem', color: 'var(--text-color)' }}>
+                    DASHBOARD
                 </h1>
 
                 {/* AI Tip Card */}

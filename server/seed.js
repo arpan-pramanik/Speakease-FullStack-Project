@@ -32,14 +32,14 @@ const seedData = async () => {
 
         // Create demo user
         const demoUser = await User.create({
-            name: 'Sarah Johnson',
-            email: 'sarah@example.com',
-            password: 'sarah123',
+            name: 'Test User',
+            email: 'testuser@example.com',
+            password: 'testuser123',
             role: 'user',
             streakDays: 7,
             totalXP: 250
         });
-        console.log('Demo user created: sarah@example.com / sarah123');
+        console.log('Demo user created: testuser@example.com / testuser123');
 
         // Create Languages
         const spanish = await Language.create({
@@ -679,7 +679,7 @@ const seedData = async () => {
         console.log('\n✅ Seed completed successfully!');
         console.log('\n📋 Login Credentials:');
         console.log('   Admin:  admin@speakease.com / admin123');
-        console.log('   User:   sarah@example.com / sarah123\n');
+        console.log('   User:   testuser@example.com / testuser123\n');
 
         process.exit(0);
     } catch (error) {

@@ -107,18 +107,40 @@ export const InteractiveBackground = () => {
             const ai = isAIModeRef.current;
             ctx.clearRect(0, 0, w, h);
 
+            // Dynamic background gradients (energy fields)
+            const time = Date.now() * 0.001;
+            const bgGradient = ctx.createRadialGradient(
+                w / 2 + Math.cos(time * 0.5) * w / 4,
+                h / 2 + Math.sin(time * 0.3) * h / 4,
+                0,
+                w / 2, h / 2, w
+            );
+
+            if (ai) {
+                bgGradient.addColorStop(0, 'rgba(196, 240, 0, 0.08)');
+                bgGradient.addColorStop(0.5, 'rgba(0, 255, 200, 0.04)');
+                bgGradient.addColorStop(1, 'rgba(5, 5, 20, 1)');
+            } else {
+                bgGradient.addColorStop(0, 'rgba(40, 60, 120, 0.12)');
+                bgGradient.addColorStop(0.5, 'rgba(20, 30, 60, 0.06)');
+                bgGradient.addColorStop(1, 'rgba(5, 5, 5, 1)');
+            }
+
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, w, h);
+
             // Draw connection lines between nearby particles
             for (let i = 0; i < particles.length; i++) {
                 for (let j = i + 1; j < particles.length; j++) {
                     const dx = particles[i].x - particles[j].x;
                     const dy = particles[i].y - particles[j].y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < 100) {
-                        const opacity = (1 - dist / 100) * 0.08;
+                    if (dist < 120) {
+                        const opacity = (1 - dist / 120) * 0.1;
                         if (ai) {
-                            ctx.strokeStyle = `rgba(196, 240, 0, ${opacity * 2})`;
+                            ctx.strokeStyle = `rgba(196, 240, 0, ${opacity * 2.5})`;
                         } else {
-                            ctx.strokeStyle = `rgba(100, 130, 200, ${opacity})`;
+                            ctx.strokeStyle = `rgba(100, 130, 255, ${opacity * 1.5})`;
                         }
                         ctx.lineWidth = 0.5;
                         ctx.beginPath();
@@ -129,20 +151,20 @@ export const InteractiveBackground = () => {
                 }
             }
 
-            // Mouse glow
+            // Interactive mouse glow
             const mx = mouseRef.current.x;
             const my = mouseRef.current.y;
             if (mx > 0 && my > 0) {
-                const grad = ctx.createRadialGradient(mx, my, 0, mx, my, ai ? 250 : 150);
+                const mouseGrad = ctx.createRadialGradient(mx, my, 0, mx, my, ai ? 300 : 200);
                 if (ai) {
-                    grad.addColorStop(0, 'rgba(196, 240, 0, 0.06)');
-                    grad.addColorStop(0.5, 'rgba(0, 255, 200, 0.02)');
-                    grad.addColorStop(1, 'transparent');
+                    mouseGrad.addColorStop(0, 'rgba(196, 240, 0, 0.1)');
+                    mouseGrad.addColorStop(0.5, 'rgba(0, 255, 200, 0.05)');
+                    mouseGrad.addColorStop(1, 'transparent');
                 } else {
-                    grad.addColorStop(0, 'rgba(100, 130, 220, 0.04)');
-                    grad.addColorStop(1, 'transparent');
+                    mouseGrad.addColorStop(0, 'rgba(100, 150, 255, 0.08)');
+                    mouseGrad.addColorStop(1, 'transparent');
                 }
-                ctx.fillStyle = grad;
+                ctx.fillStyle = mouseGrad;
                 ctx.fillRect(0, 0, w, h);
             }
 
