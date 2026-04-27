@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { getLeaderboard } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -7,24 +7,47 @@ import { IconTrophy, IconXP, IconFire, IconGold, IconSilver, IconBronze, IconSpa
 
 const Leaderboard = () => {
     const [users, setUsers] = useState([]);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(true);
     const { user } = useAuth();
     const { isAIMode } = useAIMode();
+    const observer = useRef();
+
+    const lastUserRef = (node) => {
+        if (loading) return;
+        if (observer.current) observer.current.disconnect();
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                setPage(prevPage => prevPage + 1);
+            }
+        });
+        if (node) observer.current.observe(node);
+    };
 
     useEffect(() => {
         const fetchLeaderboard = async () => {
-            try { const res = await getLeaderboard(); setUsers(res.data); }
+            setLoading(true);
+            try {
+                const res = await getLeaderboard();
+                // Simulation of pagination since the current mock API returns all users
+                const allUsers = res.data;
+                const pageSize = 10;
+                const startIndex = (page - 1) * pageSize;
+                const nextBatch = allUsers.slice(startIndex, startIndex + pageSize);
+
+                if (page === 1) {
+                    setUsers(nextBatch);
+                } else {
+                    setUsers(prev => [...prev, ...nextBatch]);
+                }
+                setHasMore(startIndex + pageSize < allUsers.length);
+            }
             catch (err) { console.error(err); }
             finally { setLoading(false); }
         };
         fetchLeaderboard();
-    }, []);
-
-    if (loading) return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="page-section" style={{ justifyContent: 'center', alignItems: 'center' }}>
-            <h2 style={{ color: 'var(--accent-color)' }}>Loading network...</h2>
-        </motion.div>
-    );
+    }, [page]);
 
     const getRankIcon = (index) => {
         if (index === 0) return <IconGold size={28} />;
@@ -44,7 +67,7 @@ const Leaderboard = () => {
                 </h3>
                 <h1 style={{ fontSize: '8vw', lineHeight: 0.85, marginBottom: '3rem' }}>LEADERBOARD</h1>
 
-                {users.length === 0 ? (
+                {users.length === 0 && !loading ? (
                     <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}>No travelers found yet.</p>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
@@ -92,9 +115,9 @@ const Leaderboard = () => {
                         })}
                     </div>
                 )}
-                {loading && page > 1 && (
-                    <div style={{ textAlign: 'center', marginTop: '2rem', color: 'var(--accent-color)' }}>
-                        Syncing more travelers...
+                {loading && (
+                    <div style={{ textAlign: 'center', marginTop: '2rem', color: 'var(--accent-color)', fontFamily: 'var(--font-display)', letterSpacing: '0.1em', fontSize: '0.8rem' }}>
+                        SYNCING NETWORK DATA...
                     </div>
                 )}
             </div>
