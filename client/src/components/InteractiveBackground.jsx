@@ -2,6 +2,7 @@ import React, { useRef, useMemo, useEffect, useState } from 'react';
 import { Canvas, useFrame, extend } from '@react-three/fiber';
 import { useAIMode } from '../context/AIModeContext';
 import { EffectComposer, Bloom, Noise, Vignette, ChromaticAberration } from '@react-three/postprocessing';
+import { Float } from '@react-three/drei';
 import * as THREE from 'three';
 
 extend({ ShaderMaterial: THREE.ShaderMaterial });
@@ -23,7 +24,6 @@ const fragmentShader = `
     uniform vec3 uAccentColor;
     varying vec2 vUv;
 
-    // Simplex noise helper
     vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
     float snoise(vec2 v){
         const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
@@ -36,8 +36,7 @@ const fragmentShader = `
         i = mod(i, 289.0);
         vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
         vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
-        m = m*m ;
-        m = m*m ;
+        m = m*m ; m = m*m ;
         vec3 x = 2.0 * fract(p * C.www) - 1.0;
         vec3 h = abs(x) - 0.5;
         vec3 ox = floor(x + 0.5);
@@ -52,25 +51,35 @@ const fragmentShader = `
     void main() {
         vec2 uv = vUv;
         vec2 mouse = uMouse * 0.5 + 0.5;
-        
         float dist = distance(uv, mouse);
         float ripple = sin(dist * 10.0 - uTime * 2.0) * 0.02 * uInteraction;
-        
-        float n = snoise(uv * 3.0 + uTime * 0.1 + ripple);
-        n += 0.5 * snoise(uv * 6.0 - uTime * 0.2);
-        
+        float n = snoise(uv * 2.5 + uTime * 0.05 + ripple);
+        n += 0.4 * snoise(uv * 5.0 - uTime * 0.1);
         vec3 color = mix(uBaseColor, uAccentColor, n);
-        color += (1.0 - dist) * 0.1 * uInteraction; // Glow on interaction
-        
+        color += (1.0 - dist) * 0.15 * uInteraction;
         gl_FragColor = vec4(color, 1.0);
     }
 `;
 
+const FloatingOrbs = () => {
+    const { isAIMode } = useAIMode();
+    return (
+        <group>
+            {[...Array(5)].map((_, i) => (
+                <Float key={i} speed={2} rotationIntensity={2} floatIntensity={2} position={[(Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 5]}>
+                    <mesh>
+                        <torusKnotGeometry args={[0.5, 0.1, 100, 16]} />
+                        <meshStandardMaterial color={isAIMode ? "#00ffcc" : "#4477ff"} emissive={isAIMode ? "#00ffcc" : "#4477ff"} emissiveIntensity={2} transparent opacity={0.4} />
+                    </mesh>
+                </Float>
+            ))}
+        </group>
+    );
+};
+
 const NeuralVoid = ({ interactionPower }) => {
     const { isAIMode } = useAIMode();
-    const meshRef = useRef();
     const materialRef = useRef();
-
     const uniforms = useMemo(() => ({
         uTime: { value: 0 },
         uMouse: { value: new THREE.Vector2(0, 0) },
@@ -95,74 +104,39 @@ const NeuralVoid = ({ interactionPower }) => {
     });
 
     return (
-        <mesh ref={meshRef}>
+        <mesh>
             <planeGeometry args={[100, 100]} />
-            <shaderMaterial
-                ref={materialRef}
-                vertexShader={vertexShader}
-                fragmentShader={fragmentShader}
-                uniforms={uniforms}
-                transparent
-            />
+            <shaderMaterial ref={materialRef} vertexShader={vertexShader} fragmentShader={fragmentShader} uniforms={uniforms} transparent />
         </mesh>
     );
 };
 
-const GlitterDust = ({ interactionPower }) => {
-    const meshRef = useRef();
-    const count = 2000;
-    const [positions, speeds] = useMemo(() => {
-        const pos = new Float32Array(count * 3);
-        const spd = new Float32Array(count);
-        for (let i = 0; i < count; i++) {
-            pos[i * 3] = (Math.random() - 0.5) * 60;
-            pos[i * 3 + 1] = (Math.random() - 0.5) * 60;
-            pos[i * 3 + 2] = (Math.random() - 0.5) * 30;
-            spd[i] = 0.01 + Math.random() * 0.03;
-        }
-        return [pos, spd];
-    }, []);
-
-    useFrame((state) => {
-        const posAttr = meshRef.current.geometry.attributes.position;
-        for (let i = 0; i < count; i++) {
-            let y = posAttr.getY(i);
-            y += speeds[i] * (1 + interactionPower * 3);
-            if (y > 30) y = -30;
-            posAttr.setY(i, y);
-        }
-        posAttr.needsUpdate = true;
-    });
-
-    return (
-        <points ref={meshRef}>
-            <bufferGeometry>
-                <bufferAttribute attach="attributes-position" count={count} array={positions} itemSize={3} />
-            </bufferGeometry>
-            <pointsMaterial size={0.07} color="#ffffff" transparent opacity={0.2} blending={THREE.AdditiveBlending} sizeAttenuation />
-        </points>
-    );
+const ReactiveController = ({ interactionPower, setInteractionPower }) => {
+    useFrame(() => { if (interactionPower > 0) setInteractionPower(prev => Math.max(0, prev - 0.015)); });
+    return null;
 };
 
 const BackgroundScene = () => {
     const { isAIMode } = useAIMode();
     const [interactionPower, setInteractionPower] = useState(0);
-
     useEffect(() => {
-        const handleAction = () => { setInteractionPower(1.0); setTimeout(() => setInteractionPower(0), 1200); };
+        const handleAction = () => { setInteractionPower(1.0); };
         window.addEventListener('click', handleAction);
         return () => window.removeEventListener('click', handleAction);
     }, []);
 
     return (
-        <Canvas camera={{ position: [0, 0, 10], fov: 75 }} style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+        <Canvas camera={{ position: [0, 0, 15], fov: 45 }} style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+            <ReactiveController interactionPower={interactionPower} setInteractionPower={setInteractionPower} />
+            <ambientLight intensity={0.5} />
+            <pointLight position={[10, 10, 10]} intensity={2} color={isAIMode ? "#00ffcc" : "#7744ff"} />
             <NeuralVoid interactionPower={interactionPower} />
-            <GlitterDust interactionPower={interactionPower} />
+            <FloatingOrbs />
             <EffectComposer>
-                <Bloom luminanceThreshold={0} intensity={1.5} mipmapBlur />
-                <Noise opacity={0.04} />
-                <ChromaticAberration offset={[0.001, 0.001]} />
-                <Vignette darkness={1.2} />
+                <Bloom luminanceThreshold={0.1} intensity={2.0} mipmapBlur />
+                <Noise opacity={0.03} />
+                <ChromaticAberration offset={[0.0015, 0.0015]} />
+                <Vignette darkness={1.3} offset={0.1} />
             </EffectComposer>
         </Canvas>
     );
