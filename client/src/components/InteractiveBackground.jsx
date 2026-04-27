@@ -1,8 +1,10 @@
 import React, { useRef, useMemo, useEffect, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, extend } from '@react-three/fiber';
 import { useAIMode } from '../context/AIModeContext';
 import { EffectComposer, Bloom, Noise, Vignette, ChromaticAberration } from '@react-three/postprocessing';
 import * as THREE from 'three';
+
+extend({ ShaderMaterial: THREE.ShaderMaterial });
 
 // --- GLSL SHADERS ---
 const vertexShader = `
