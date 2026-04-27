@@ -51,8 +51,10 @@ const Leaderboard = () => {
                         {users.map((u, i) => {
                             const isCurrentUser = user && (u._id === user._id || u.email === user.email);
                             return (
-                                <motion.div key={u._id || i}
-                                    initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: i * 0.06 }}
+                                <motion.div
+                                    ref={i === users.length - 1 ? lastUserRef : null}
+                                    key={u._id || i}
+                                    initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: (i % 10) * 0.06 }}
                                     style={{
                                         display: 'flex', alignItems: 'center', gap: '1.2rem',
                                         padding: '1.2rem 1.5rem',
@@ -88,6 +90,11 @@ const Leaderboard = () => {
                                 </motion.div>
                             );
                         })}
+                    </div>
+                )}
+                {loading && page > 1 && (
+                    <div style={{ textAlign: 'center', marginTop: '2rem', color: 'var(--accent-color)' }}>
+                        Syncing more travelers...
                     </div>
                 )}
             </div>
