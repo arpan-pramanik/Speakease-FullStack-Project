@@ -9,6 +9,7 @@ import { LenisScroll } from './components/LenisScroll';
 import { Navigation } from './components/Navigation';
 import { InteractiveBackground } from './components/InteractiveBackground';
 import { WaveTransition } from './components/WaveTransition';
+import { Header } from './components/Header';
 
 // Sequences (Pages)
 import Landing from './pages/Landing';
@@ -71,6 +72,7 @@ export default function App() {
             <Preloader />
             <InteractiveBackground />
             <WaveTransition />
+            <Header />
             <Navigation />
 
             <div id="dom-container">

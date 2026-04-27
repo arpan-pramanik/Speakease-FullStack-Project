@@ -93,8 +93,8 @@ const Login = () => {
                 }}
                 className="interactive"
             >
-                <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem', color: 'var(--accent-color)' }}>THE PORTAL</h2>
-                <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', textAlign: 'center', fontSize: '0.9rem' }}>Enter your credentials to continue the journey.</p>
+                <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem', color: 'var(--accent-color)' }}>SIGN IN</h2>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', textAlign: 'center', fontSize: '0.9rem' }}>Enter your email and password to sign in.</p>
 
                 {error && (
                     <div style={{ color: '#ff4b4b', marginBottom: '1rem', fontSize: '0.9rem' }}>{error}</div>
@@ -147,7 +147,7 @@ const Login = () => {
                             e.currentTarget.style.transform = 'scale(1)';
                         }}
                     >
-                        Initiate
+                        Sign In
                     </button>
                 </form>
 
@@ -189,9 +189,9 @@ const Login = () => {
                 )}
 
                 <div style={{ marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    New traveler?{' '}
+                    New user?{' '}
                     <Link to="/register" style={{ color: 'var(--accent-color)' }}>
-                        Forge a key
+                        Sign up
                     </Link>
                 </div>
             </div>
