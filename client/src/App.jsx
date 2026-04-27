@@ -45,6 +45,7 @@ const AnimatedRoutes = () => {
 
 export default function App() {
     const { playClickSound, playHoverSound } = useAudio();
+    const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
     useEffect(() => {
         const handleClick = (e) => {
@@ -72,8 +73,8 @@ export default function App() {
             <Preloader />
             <InteractiveBackground />
             <WaveTransition />
-            <Header />
-            <Navigation />
+            <Header onToggleMenu={() => setIsMenuOpen(!isMenuOpen)} />
+            <Navigation isOpen={isMenuOpen} onToggle={() => setIsMenuOpen(!isMenuOpen)} />
 
             <div id="dom-container">
                 <LenisScroll>

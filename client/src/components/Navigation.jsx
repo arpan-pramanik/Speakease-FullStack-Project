@@ -7,15 +7,8 @@ import { useAudio } from '../context/AudioContext';
 import { AIChat } from './AIChat';
 import { IconSparkles, IconVolumeOn, IconVolumeOff } from './Icons';
 
-export const Navigation = () => {
-    const [isOpen, setIsOpen] = useState(false);
+export const Navigation = ({ isOpen, onToggle }) => {
     const [showChat, setShowChat] = useState(false);
-    const navigate = useNavigate();
-    const { user } = useAuth();
-    const { isAIMode, toggleAIMode, isTransitioning, transitionDirection } = useAIMode();
-    const { isSoundOn, toggleSound } = useAudio();
-
-    const toggleMenu = () => setIsOpen(!isOpen);
 
     const menuVariants = {
         closed: { y: '-100%', opacity: 0, transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] } },
@@ -34,22 +27,7 @@ export const Navigation = () => {
 
     return (
         <>
-            {/* Menu Button */}
-            <button
-                onClick={toggleMenu}
-                style={{
-                    position: 'fixed', top: '28px', right: '160px',
-                    zIndex: 9005, background: 'none',
-                    color: 'var(--text-color)', border: 'none',
-                    fontFamily: 'var(--font-display)', fontSize: '0.9rem',
-                    letterSpacing: '0.15em', textTransform: 'uppercase',
-                    fontWeight: 700,
-                    cursor: 'pointer', mixBlendMode: 'difference'
-                }}
-                className="interactive"
-            >
-                {isOpen ? 'Close' : 'Menu'}
-            </button>
+            {/* Menu button removed as it's now in Header */}
 
             {/* Sound Toggle Button */}
             <button
@@ -75,7 +53,7 @@ export const Navigation = () => {
                 <motion.button
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    onClick={() => { setShowChat(true); isOpen && toggleMenu(); }}
+                    onClick={() => { setShowChat(true); isOpen && onToggle(); }}
                     style={{
                         position: 'fixed', bottom: '30px', right: '30px',
                         zIndex: 9001, width: '60px', height: '60px',
@@ -209,7 +187,7 @@ export const Navigation = () => {
                             >
                                 <Link
                                     to={link.path}
-                                    onClick={toggleMenu}
+                                    onClick={onToggle}
                                     style={{
                                         fontFamily: 'var(--font-display)',
                                         fontSize: '6vw', fontWeight: 800,
@@ -241,7 +219,7 @@ export const Navigation = () => {
                                 transition={{ delay: 0.2 + navLinks.length * 0.1, duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
                             >
                                 <button
-                                    onClick={() => { setShowChat(true); toggleMenu(); }}
+                                    onClick={() => { setShowChat(true); onToggle(); }}
                                     style={{
                                         fontFamily: 'var(--font-display)',
                                         fontSize: '6vw', fontWeight: 800,

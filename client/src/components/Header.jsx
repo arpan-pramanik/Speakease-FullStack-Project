@@ -1,16 +1,13 @@
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { IconLogout } from './Icons';
+import { IconLogout, IconUser, IconMenu } from './Icons';
+import { ProfilePanel } from './ProfilePanel';
+import { useState } from 'react';
 
-export const Header = () => {
-    const { user, logout } = useAuth();
-    const navigate = useNavigate();
-
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
-    };
+export const Header = ({ onToggleMenu }) => {
+    const { user } = useAuth();
+    const [showProfile, setShowProfile] = useState(false);
 
     if (!user) return null;
 
