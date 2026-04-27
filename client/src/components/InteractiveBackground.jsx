@@ -139,8 +139,8 @@ const BackgroundScene = () => {
             <NeuralMesh />
 
             <EffectComposer disableNormalPass>
-                <Bloom luminanceThreshold={0} intensity={isAIMode ? 2.5 : 1.5} mipmapBlur />
-                <Noise opacity={0.04} />
+                <Bloom luminanceThreshold={1} intensity={isAIMode ? 1.5 : 0.8} />
+                <Noise opacity={0.02} />
                 <Vignette eskil={false} offset={0.1} darkness={1.1} />
             </EffectComposer>
         </Canvas>

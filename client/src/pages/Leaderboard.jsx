@@ -60,7 +60,7 @@ const Leaderboard = () => {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, filter: 'blur(10px)', transition: { duration: 0.8 } }}
             className="page-section" style={{ justifyContent: 'flex-start', paddingTop: '8vh' }}
         >
-            <div style={{ padding: '5vw', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+            <div style={{ padding: '5vw', maxWidth: '1000px', margin: '0', width: '100%' }}>
                 <h3 style={{ color: 'var(--accent-color)', fontSize: '1rem', letterSpacing: '0.2em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <IconTrophy size={18} color="var(--accent-color)" /> THE NETWORK
                     {isAIMode && <IconSparkles size={14} color="var(--accent-color)" />}
