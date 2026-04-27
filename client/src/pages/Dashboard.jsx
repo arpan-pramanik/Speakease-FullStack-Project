@@ -50,11 +50,9 @@ const Dashboard = () => {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
+                        className="glass-card-ai"
                         style={{
                             padding: '1.5rem 2rem', marginBottom: '3rem',
-                            background: 'rgba(196, 240, 0, 0.04)',
-                            border: '1px solid rgba(196, 240, 0, 0.15)',
-                            borderRadius: '20px',
                             display: 'flex', gap: '1rem', alignItems: 'flex-start'
                         }}
                     >
@@ -71,22 +69,14 @@ const Dashboard = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
                     {cards.map((card, i) => (
                         <motion.div key={card.title} initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: i * 0.1 }}>
-                            <Link to={card.path} style={{
+                            <Link to={card.path} className="glass-card-interactive" style={{
                                 display: 'block', padding: '2rem',
-                                background: 'rgba(255,255,255,0.02)',
-                                border: '1px solid rgba(255,255,255,0.06)',
-                                borderRadius: '20px',
-                                transition: 'all 0.4s cubic-bezier(0.76, 0, 0.24, 1)'
                             }}
                                 onMouseEnter={(e) => {
-                                    e.currentTarget.style.borderColor = 'var(--accent-color)';
                                     e.currentTarget.style.transform = 'translateY(-5px)';
-                                    e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.3)';
                                 }}
                                 onMouseLeave={(e) => {
-                                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
                                     e.currentTarget.style.transform = 'translateY(0)';
-                                    e.currentTarget.style.boxShadow = 'none';
                                 }}>
                                 <div style={{ marginBottom: '1rem' }}>{card.icon}</div>
                                 <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{card.title}</h2>

@@ -44,9 +44,8 @@ const Lessons = () => {
                 <h1 style={{ fontSize: '8vw', lineHeight: 0.85, marginBottom: '3rem' }}>LESSONS</h1>
 
                 {isAIMode && (
-                    <p style={{
+                    <p className="glass-card-ai" style={{
                         color: 'var(--accent-color)', fontSize: '0.85rem', marginBottom: '2rem', padding: '0.8rem 1.5rem',
-                        background: 'rgba(196,240,0,0.04)', border: '1px solid rgba(196,240,0,0.1)', borderRadius: '12px',
                         display: 'flex', alignItems: 'center', gap: '0.5rem',
                     }}>
                         <IconSparkles size={14} color="var(--accent-color)" />
@@ -60,15 +59,12 @@ const Lessons = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {lessons.map((lesson, i) => (
                             <motion.div key={lesson._id} initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: i * 0.08 }}>
-                                <Link to={`/lesson/${lesson._id}`} style={{
+                                <Link to={`/lesson/${lesson._id}`} className="glass-card-interactive" style={{
                                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                                     padding: '1.5rem 2rem',
-                                    background: isAIMode ? 'rgba(196,240,0,0.02)' : 'rgba(255,255,255,0.02)',
-                                    border: `1px solid ${isAIMode ? 'rgba(196,240,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
-                                    borderRadius: '15px', transition: 'all 0.4s cubic-bezier(0.76, 0, 0.24, 1)'
                                 }}
-                                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent-color)'; e.currentTarget.style.paddingLeft = '2.5rem'; }}
-                                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = isAIMode ? 'rgba(196,240,0,0.06)' : 'rgba(255,255,255,0.06)'; e.currentTarget.style.paddingLeft = '2rem'; }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.paddingLeft = '2.5rem'; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.paddingLeft = '2rem'; }}
                                 >
                                     <div>
                                         <h3 style={{ fontSize: '1.2rem', marginBottom: '0.3rem' }}>{lesson.title}</h3>

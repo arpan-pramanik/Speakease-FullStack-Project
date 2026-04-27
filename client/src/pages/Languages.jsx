@@ -83,21 +83,14 @@ const Languages = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
                     {languages.map((lang, i) => (
                         <motion.div key={lang._id} initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: i * 0.08 }}>
-                            <Link to={`/lessons?lang=${lang._id}`} style={{
+                            <Link to={`/lessons?lang=${lang._id}`} className="glass-card-interactive" style={{
                                 display: 'block', padding: '2rem',
-                                background: isAIMode ? 'rgba(196,240,0,0.02)' : 'rgba(255,255,255,0.02)',
-                                border: `1px solid ${isAIMode ? 'rgba(196,240,0,0.08)' : 'rgba(255,255,255,0.06)'}`,
-                                borderRadius: '20px', transition: 'all 0.4s cubic-bezier(0.76, 0, 0.24, 1)'
                             }}
                                 onMouseEnter={(e) => {
-                                    e.currentTarget.style.borderColor = 'var(--accent-color)';
                                     e.currentTarget.style.transform = 'translateY(-5px)';
-                                    e.currentTarget.style.boxShadow = isAIMode ? '0 20px 50px rgba(196,240,0,0.08)' : '0 20px 40px rgba(0,0,0,0.3)';
                                 }}
                                 onMouseLeave={(e) => {
-                                    e.currentTarget.style.borderColor = isAIMode ? 'rgba(196,240,0,0.08)' : 'rgba(255,255,255,0.06)';
                                     e.currentTarget.style.transform = 'translateY(0)';
-                                    e.currentTarget.style.boxShadow = 'none';
                                 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                                     <span style={{ fontSize: '2.5rem' }}>{lang.icon}</span>

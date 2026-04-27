@@ -78,15 +78,16 @@ const Leaderboard = () => {
                                     ref={i === users.length - 1 ? lastUserRef : null}
                                     key={u._id || i}
                                     initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: (i % 10) * 0.06 }}
+                                    className="glass-card"
                                     style={{
                                         display: 'flex', alignItems: 'center', gap: '1.2rem',
                                         padding: '1.2rem 1.5rem',
-                                        background: isCurrentUser ? (isAIMode ? 'rgba(196,240,0,0.06)' : 'rgba(196,240,0,0.04)') : 'rgba(255,255,255,0.02)',
-                                        border: `1px solid ${isCurrentUser ? 'rgba(196,240,0,0.2)' : 'rgba(255,255,255,0.06)'}`,
-                                        borderRadius: '15px', transition: 'all 0.3s'
+                                        background: isCurrentUser ? 'rgba(196,240,0,0.06)' : undefined,
+                                        borderColor: isCurrentUser ? 'rgba(196,240,0,0.2)' : undefined,
+                                        transition: 'all 0.3s'
                                     }}
                                     onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent-color)'}
-                                    onMouseLeave={(e) => e.currentTarget.style.borderColor = isCurrentUser ? 'rgba(196,240,0,0.2)' : 'rgba(255,255,255,0.06)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.borderColor = isCurrentUser ? 'rgba(196,240,0,0.2)' : 'rgba(255,255,255,0.08)'}
                                 >
                                     {getRankIcon(i)}
                                     <div style={{
