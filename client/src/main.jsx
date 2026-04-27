@@ -1,6 +1,10 @@
 import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
+import { AuthProvider } from './context/AuthContext'
+import { AIModeProvider } from './context/AIModeContext'
+import { AudioProvider } from './context/AudioContext'
 import './index.css'
 import Lenis from '@studio-freight/lenis'
 
@@ -30,7 +34,17 @@ const Root = () => {
         }
     }, [])
 
-    return <App />
+    return (
+        <BrowserRouter>
+            <AuthProvider>
+                <AIModeProvider>
+                    <AudioProvider>
+                        <App />
+                    </AudioProvider>
+                </AIModeProvider>
+            </AuthProvider>
+        </BrowserRouter>
+    )
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
