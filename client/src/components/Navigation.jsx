@@ -38,11 +38,12 @@ export const Navigation = () => {
             <button
                 onClick={toggleMenu}
                 style={{
-                    position: 'fixed', top: '40px', right: '40px',
-                    zIndex: 9000, background: 'none',
+                    position: 'fixed', top: '28px', right: '160px',
+                    zIndex: 9005, background: 'none',
                     color: 'var(--text-color)', border: 'none',
-                    fontFamily: 'var(--font-display)', fontSize: '1rem',
-                    letterSpacing: '0.1em', textTransform: 'uppercase',
+                    fontFamily: 'var(--font-display)', fontSize: '0.9rem',
+                    letterSpacing: '0.15em', textTransform: 'uppercase',
+                    fontWeight: 700,
                     cursor: 'pointer', mixBlendMode: 'difference'
                 }}
                 className="interactive"
