@@ -89,16 +89,33 @@ export const Navigation = ({ isOpen, onToggle }) => {
                         style={{
                             position: 'fixed', inset: 0,
                             background: isAIMode
-                                ? 'rgba(5, 5, 15, 0.97)'
-                                : 'rgba(5, 5, 5, 0.95)',
-                            backdropFilter: 'blur(20px)',
-                            zIndex: 8999,
+                                ? 'rgba(1, 1, 3, 0.98)'
+                                : 'rgba(1, 1, 3, 0.95)',
+                            backdropFilter: 'blur(30px)',
+                            zIndex: 9001, // Higher than Header (9000)
                             display: 'flex', flexDirection: 'column',
                             justifyContent: 'center', alignItems: 'center',
-                            gap: '4vh'
+                            gap: '3vh',
+                            padding: '100px 40px 40px 40px' // Ensure content is below potential header area if translucent
                         }}
                         className="interactive"
                     >
+                        {/* Custom Close Button */}
+                        <button
+                            onClick={onToggle}
+                            style={{
+                                position: 'absolute', top: '30px', right: '40px',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                borderRadius: '50px', padding: '0.8rem 1.5rem',
+                                color: 'var(--text-color)', cursor: 'pointer',
+                                fontFamily: 'var(--font-display)', fontSize: '0.7rem',
+                                letterSpacing: '0.15em', fontWeight: 800
+                            }}
+                            className="interactive"
+                        >
+                            CLOSE
+                        </button>
                         {/* AI Mode Toggle */}
                         {user && (
                             <motion.div
