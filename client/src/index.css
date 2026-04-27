@@ -4,14 +4,25 @@
    ============================================================ */
 
 :root {
-    /* Cinematic Color Palette */
-    --bg-color: #050505;
-    --text-color: #f0f0f0;
-    --text-muted: #888888;
-    --accent-color: #c4f000;
-    /* Neon/electric lime accent */
-    --font-display: 'Outfit', sans-serif;
+    /* Elite Void Palette */
+    --bg-color: #010103;
+    --bg-accent: #05050a;
+    --text-color: #ffffff;
+    --text-muted: rgba(255, 255, 255, 0.4);
+    --accent-color: #00ffcc;
+    /* Emerald Cyan */
+    --accent-glow: rgba(0, 255, 204, 0.3);
+    --secondary-color: #c4f000;
+    /* Electric Lime */
+
+    /* Typography */
+    --font-display: 'Outfit', 'Inter', sans-serif;
     --font-body: 'Inter', sans-serif;
+
+    /* Shadows & Blurs */
+    --glass-bg: rgba(255, 255, 255, 0.02);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-blur: 20px;
 }
 
 *,
@@ -120,14 +131,30 @@ a {
     text-decoration: none;
 }
 
-/* Utility layout */
+/* Elite Layout Utilities */
 .page-section {
     position: relative;
-    width: 100vw;
+    width: 100%;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    padding: 10vw;
+    padding: clamp(2rem, 8vw, 8rem);
+    z-index: 10;
+}
+
+.hero-text {
+    font-size: clamp(3rem, 15vw, 15rem);
+    line-height: 0.8;
+    letter-spacing: -0.05em;
+    font-weight: 800;
+}
+
+.sub-header {
+    font-size: 0.8rem;
+    letter-spacing: 0.3em;
+    color: var(--accent-color);
+    margin-bottom: 2rem;
+    display: block;
 }
 
 /* Preloader Base */

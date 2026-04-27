@@ -32,16 +32,19 @@ const Leaderboard = () => {
                 const res = await getLeaderboard();
                 // Simulation of pagination since the current mock API returns all users
                 const allUsers = res.data;
+                // Ensure data is sorted by totalXP before rendering
+                const sortedUsers = [...allUsers].sort((a, b) => (b.totalXP || 0) - (a.totalXP || 0));
+
                 const pageSize = 10;
                 const startIndex = (page - 1) * pageSize;
-                const nextBatch = allUsers.slice(startIndex, startIndex + pageSize);
+                const nextBatch = sortedUsers.slice(startIndex, startIndex + pageSize);
 
                 if (page === 1) {
                     setUsers(nextBatch);
                 } else {
                     setUsers(prev => [...prev, ...nextBatch]);
                 }
-                setHasMore(startIndex + pageSize < allUsers.length);
+                setHasMore(startIndex + pageSize < sortedUsers.length);
             }
             catch (err) { console.error(err); }
             finally { setLoading(false); }
