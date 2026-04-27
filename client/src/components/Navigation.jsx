@@ -9,6 +9,10 @@ import { IconSparkles, IconVolumeOn, IconVolumeOff } from './Icons';
 
 export const Navigation = ({ isOpen, onToggle }) => {
     const [showChat, setShowChat] = useState(false);
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const { isAIMode, toggleAIMode, isTransitioning, transitionDirection } = useAIMode();
+    const { isSoundOn, toggleSound } = useAudio();
 
     const menuVariants = {
         closed: { y: '-100%', opacity: 0, transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] } },
