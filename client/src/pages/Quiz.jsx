@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getQuiz, submitQuiz, completeLesson } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const Quiz = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [quiz, setQuiz] = useState(null);
     const [loading, setLoading] = useState(true);
+    const { loadUser } = useAuth();
     
     // Exam State
     const [currentQ, setCurrentQ] = useState(0);
@@ -122,6 +124,7 @@ const Quiz = () => {
             if (percentage >= 70) {
                 await completeLesson(quiz.lessonId);
             }
+            await loadUser(); // Immediately fetch the new XP and Streak
         } catch (err) { console.error(err); }
     };
 

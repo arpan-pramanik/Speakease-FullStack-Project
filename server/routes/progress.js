@@ -60,7 +60,9 @@ router.post('/complete-lesson', protect, async (req, res) => {
         const now = new Date();
         const lastActivity = new Date(progress.lastActivity);
         const diffHours = (now - lastActivity) / (1000 * 60 * 60);
-        if (diffHours >= 20 && diffHours < 48) {
+        if (progress.streakDays === 0) {
+            progress.streakDays = 1;
+        } else if (diffHours >= 20 && diffHours < 48) {
             progress.streakDays += 1;
         } else if (diffHours >= 48) {
             progress.streakDays = 1;
