@@ -119,41 +119,52 @@ const getTranslation = (langName) => {
 
 const generateLessonContent = (langName, topic, number) => {
     const t = getTranslation(langName);
+    
+    const vocabPool = [
+        { word: 'Hello', translation: t.hello },
+        { word: 'Goodbye', translation: t.goodbye },
+        { word: 'Thanks', translation: t.thanks },
+        { word: 'Dog', translation: t.dog },
+        { word: 'Cat', translation: t.cat },
+        { word: 'Bird', translation: t.bird },
+        { word: 'Water', translation: t.water },
+        { word: 'Happy', translation: t.happy }
+    ];
+
+    const start = (number * 3) % vocabPool.length;
+    const vocab = [];
+    for(let i=0; i<5; i++) {
+        vocab.push(vocabPool[(start + i) % vocabPool.length]);
+    }
+
     return {
-        vocabulary: [
-            { word: `Greeting`, translation: t.hello },
-            { word: `Farewell`, translation: t.goodbye },
-            { word: `Gratitude`, translation: t.thanks },
-            { word: `Animal`, translation: t.dog },
-            { word: `Nature`, translation: t.water }
-        ],
+        vocabulary: vocab,
         grammarNotes: [{
             title: `${topic} Guidelines`,
-            explanation: `Focus on mastering these foundational mechanics. Practice spelling and pronunciation for "${t.hello}".`,
-            examples: [`${t.hello}!`, `${t.thanks}!`]
-        }
-        ]
+            explanation: `Focus on mastering these foundational mechanics for ${topic}. Practice spelling and pronunciation.`,
+            examples: [`${vocab[0].translation}!`, `${vocab[1].translation}!`]
+        }]
     };
 };
 
-const generateQuizForLesson = (lessonId, langName, topic) => {
-    const t = getTranslation(langName);
+const generateQuizForLesson = (lessonId, langName, topic, vocab) => {
+    const mcqOptions = [vocab[0].translation, vocab[1].translation, vocab[2].translation, vocab[3].translation].sort(() => Math.random() - 0.5);
 
     return {
         lessonId,
         title: `${topic} Assessment`,
-        passingScore: 60,
+        passingScore: 70,
         questions: [
             {
-                question: `Translate "Hello" into ${langName}.`,
+                question: `Translate "${vocab[0].word}" into ${langName}.`,
                 questionType: 'multiple-choice',
-                options: [t.hello, t.goodbye, t.thanks].sort(() => Math.random() - 0.5),
-                correctAnswer: t.hello,
-                explanation: `The correct greeting is ${t.hello}.`,
+                options: mcqOptions,
+                correctAnswer: vocab[0].translation,
+                explanation: `The correct translation is ${vocab[0].translation}.`,
                 points: 10
             },
             {
-                question: `The literal word for "Water" in ${langName} is "${t.water}".`,
+                question: `The literal word for "${vocab[1].word}" in ${langName} is "${vocab[1].translation}".`,
                 questionType: 'true-false',
                 options: ['True', 'False'],
                 correctAnswer: 'True',
@@ -161,27 +172,23 @@ const generateQuizForLesson = (lessonId, langName, topic) => {
                 points: 10
             },
             {
-                question: 'Translate: "I am happy" into the correct phrase.',
+                question: `Type the exact translation for "${vocab[2].word}".`,
                 questionType: 'fill-blank',
                 options: [],
-                correctAnswer: t.happy,
-                explanation: `You must remember the exact phrase: ${t.happy}`,
-                points: 10
-            },
-            {
-                question: `Form the sentence carefully: "I eat an apple"`,
-                questionType: 'form-sentence',
-                options: t.appleSentence.sort(() => Math.random() - 0.5),
-                correctAnswer: t.appleAnswer,
-                explanation: 'Assemble the blocks in the correct grammatical order.',
+                correctAnswer: vocab[2].translation,
+                explanation: `You must remember the exact phrase: ${vocab[2].translation}`,
                 points: 15
             },
             {
-                question: `Match the English absolute to its ${langName} equivalent:`,
+                question: `Match the English word to its ${langName} equivalent:`,
                 questionType: 'matching',
-                options: [`Dog:${t.dog}`, `Cat:${t.cat}`, `Bird:${t.bird}`].sort(() => Math.random() - 0.5),
-                correctAnswer: `Dog:${t.dog},Cat:${t.cat},Bird:${t.bird}`,
-                explanation: 'Connect the pairs correctly based on previous lessons.',
+                options: [
+                    `${vocab[0].word}:${vocab[0].translation}`,
+                    `${vocab[3].word}:${vocab[3].translation}`,
+                    `${vocab[4].word}:${vocab[4].translation}`
+                ],
+                correctAnswer: 'Matches complete',
+                explanation: 'Connect the pairs correctly based on the vocabulary.',
                 points: 15
             }
         ]
@@ -234,7 +241,7 @@ const seedExpandedLessons = async () => {
             const langName = langNameMatch ? langNameMatch[1] : 'Fallback';
             const topic = lesson.title;
 
-            const qData = generateQuizForLesson(lesson._id, langName, topic);
+            const qData = generateQuizForLesson(lesson._id, langName, topic, lesson.content.vocabulary);
             qData.totalPoints = qData.questions.reduce((acc, q) => acc + q.points, 0);
             quizBuffer.push(qData);
         }
@@ -242,6 +249,9 @@ const seedExpandedLessons = async () => {
         console.log(`Inserting ${quizBuffer.length} authentic quizzes...`);
         await Quiz.insertMany(quizBuffer);
         totalQuizzes = quizBuffer.length;
+
+        console.log(`Updating total lessons count for all languages...`);
+        await Language.updateMany({}, { totalLessons: 10 });
 
         console.log(`✅ Success! Generated ${totalLessons} Authentic Lessons and ${totalQuizzes} Quizzes!`);
         process.exit(0);

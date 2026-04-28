@@ -4,8 +4,8 @@ import { motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getLesson, completeLesson, getQuizzesByLesson } from '../services/api';
 import { useAIMode } from '../context/AIModeContext';
-import { askGemini, speakText } from '../services/gemini';
-import { IconArrowLeft, IconSpeaker, IconSparkles, IconBrain, IconCheck, IconSword } from '../components/Icons';
+import { askGemini } from '../services/gemini';
+import { IconArrowLeft, IconSpeaker, IconBrain, IconCheck, IconSword } from '../components/Icons';
 
 const LessonDetail = () => {
     const { id } = useParams();
@@ -16,6 +16,7 @@ const LessonDetail = () => {
     const [currentCard, setCurrentCard] = useState(0);
     const [flipped, setFlipped] = useState(false);
     const [completed, setCompleted] = useState(false);
+    const [masteredCards, setMasteredCards] = useState(new Set());
     const [quizId, setQuizId] = useState(null);
     const [aiExplanation, setAiExplanation] = useState('');
     const [aiLoading, setAiLoading] = useState(false);
@@ -38,10 +39,10 @@ const LessonDetail = () => {
         try { await completeLesson(id); setCompleted(true); } catch (err) { console.error(err); }
     };
 
-    const speakWord = (text, lang = 'es') => {
+    const speakWord = (text, code) => {
         if ('speechSynthesis' in window) {
             const utter = new SpeechSynthesisUtterance(text);
-            utter.lang = lang;
+            utter.lang = code ? code.toLowerCase() : 'en-US';
             utter.rate = 0.8;
             speechSynthesis.speak(utter);
         }
@@ -56,14 +57,14 @@ const LessonDetail = () => {
             const langName = lesson?.languageId?.languageName || 'this language';
             const result = await askGemini(
                 `For the ${langName} word "${word}" (meaning "${translation}"), give me:
-1. A cultural/etymological note (1 sentence)
-2. Two more example sentences using this word with translations
-3. A memory trick to remember it
+1. A cultural note
+2. Two example sentences
+3. A memory trick
 Keep it concise.`,
-                'You are a language learning expert. Be concise and helpful.'
+                'You are a direct language coach. Be extremely concise.'
             );
             setAiExplanation(result);
-        } catch { setAiExplanation('AI explanation unavailable right now.'); }
+        } catch { setAiExplanation('AI EXPLANATION UNAVAILABLE.'); }
         finally { setAiLoading(false); }
     };
 
@@ -76,29 +77,16 @@ Keep it concise.`,
             const vocab = content.vocabulary || lesson.vocabulary || [];
             const words = vocab.map(v => v.word).join(', ');
             const result = await askGemini(
-                `Create a short practice exercise (3 fill-in-the-blank sentences) using these words: ${words}. Include the answers at the end.`,
-                'You are a language teacher creating practice exercises. Be concise.'
+                `Create a short practice exercise (3 fill-in-the-blank sentences) using: ${words}. Include answers.`,
+                'Be direct and concise.'
             );
             setAiSentences(result);
-        } catch { setAiSentences('Could not generate practice sentences.'); }
+        } catch { setAiSentences('GENERATION FAILED.'); }
         finally { setAiLoading(false); }
     };
 
-    if (loading) {
-        return (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="page-section" style={{ justifyContent: 'center', alignItems: 'center' }}>
-                <h2 style={{ color: 'var(--accent-color)', fontSize: '2rem' }}>Loading encounter...</h2>
-            </motion.div>
-        );
-    }
-
-    if (!lesson) {
-        return (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="page-section" style={{ justifyContent: 'center', alignItems: 'center' }}>
-                <h2 style={{ color: '#ff4b4b', fontSize: '2rem' }}>Encounter not found</h2>
-            </motion.div>
-        );
-    }
+    if (loading) return <div className="preloader">LOADING CONTENT...</div>;
+    if (!lesson) return <div className="page-container"><h2 style={{ color: 'var(--accent-error)' }}>MODULE NOT FOUND</h2></div>;
 
     const content = lesson.content || {};
     const vocab = content.vocabulary || lesson.vocabulary || [];
@@ -106,76 +94,62 @@ Keep it concise.`,
     const currentVocab = vocab[currentCard];
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            exit={{ opacity: 0, filter: 'blur(10px)', transition: { duration: 0.8 } }}
-            className="page-section" style={{ justifyContent: 'flex-start', paddingTop: '8vh' }}
-        >
-            <div style={{ padding: '5vw', width: '100%', maxWidth: '900px', margin: '0 auto' }}>
-                <span onClick={() => navigate(-1)} style={{ color: 'var(--text-muted)', fontSize: '0.9rem', letterSpacing: '0.15em', marginBottom: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                    <IconArrowLeft size={16} color="var(--text-muted)" /> BACK
-                </span>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="page-container">
+            <div style={{ width: '100%', maxWidth: '900px', margin: '0 auto' }}>
+                <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <IconArrowLeft size={16} /> ABORT
+                </button>
 
-                <h3 style={{ color: 'var(--accent-color)', fontSize: '1rem', letterSpacing: '0.2em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    {isAIMode && <IconSparkles size={16} color="var(--accent-color)" />}
-                    LESSON CONTENT
-                </h3>
-                <h1 style={{ fontSize: '4vw', lineHeight: 1, marginBottom: '1rem' }}>{lesson.title}</h1>
-                <p style={{ color: 'var(--text-muted)', marginBottom: '3rem', fontSize: '1rem' }}>{lesson.description}</p>
+                <div style={{ marginBottom: '40px', borderLeft: '4px solid var(--accent-primary)', paddingLeft: '16px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 800, letterSpacing: '0.1em' }}>ACTIVE MODULE</span>
+                    <h1 style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: '#fff', textTransform: 'uppercase' }}>{lesson.title}</h1>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '16px', fontSize: '1.2rem', fontWeight: 500 }}>{lesson.description}</p>
+                </div>
 
-                {/* Vocabulary Flashcards */}
                 {vocab.length > 0 && (
-                    <div style={{ marginBottom: '3rem' }}>
-                        <h3 style={{ color: 'var(--accent-color)', letterSpacing: '0.15em', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                            VOCABULARY — {currentCard + 1} / {vocab.length}
-                        </h3>
+                    <div style={{ marginBottom: '60px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--accent-primary)', letterSpacing: '0.1em' }}>
+                                VOCABULARY DATABASE
+                            </h3>
+                            <span style={{ fontSize: '1rem', fontWeight: 900, color: '#fff' }}>{masteredCards.size} / {vocab.length} MASTERED</span>
+                        </div>
+                        {/* Progress Bar */}
+                        <div style={{ width: '100%', height: '8px', background: 'var(--bg-base)', marginBottom: '32px', borderRadius: '4px', overflow: 'hidden' }}>
+                            <motion.div 
+                                initial={{ width: 0 }} 
+                                animate={{ width: `${(masteredCards.size / vocab.length) * 100}%` }} 
+                                style={{ height: '100%', background: 'var(--accent-primary)' }} 
+                            />
+                        </div>
                         <motion.div
                             key={currentCard}
                             onClick={() => setFlipped(!flipped)}
+                            className="panel"
                             style={{
-                                width: '100%', minHeight: '250px',
-                                background: isAIMode ? 'rgba(196,240,0,0.02)' : 'rgba(255,255,255,0.03)',
-                                border: `1px solid ${isAIMode && flipped ? 'rgba(196,240,0,0.2)' : 'rgba(255,255,255,0.08)'}`,
-                                borderRadius: '20px',
+                                minHeight: '300px',
                                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                cursor: 'pointer', padding: '2rem', transition: 'all 0.4s',
-                                boxShadow: flipped ? (isAIMode ? '0 0 40px rgba(196,240,0,0.1)' : '0 0 30px rgba(100,130,220,0.1)') : 'none',
+                                cursor: 'pointer', padding: '40px', textAlign: 'center'
                             }}
                         >
                             {!flipped ? (
                                 <>
-                                    <span style={{ fontSize: '3rem', marginBottom: '1rem' }}>{currentVocab?.word}</span>
-                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>TAP TO REVEAL</span>
+                                    <span style={{ fontSize: '4rem', fontWeight: 900, color: '#fff', marginBottom: '16px' }}>{currentVocab?.word}</span>
+                                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 800, letterSpacing: '0.1em' }}>CLICK TO DECODE</span>
                                 </>
                             ) : (
                                 <>
-                                    <span style={{ fontSize: '2.5rem', marginBottom: '0.5rem', color: 'var(--accent-color)' }}>{currentVocab?.translation}</span>
+                                    <span style={{ fontSize: '3.5rem', fontWeight: 900, color: 'var(--accent-primary)', marginBottom: '8px' }}>{currentVocab?.translation}</span>
                                     {currentVocab?.pronunciation && (
-                                        <span style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '1rem' }}>/{currentVocab.pronunciation}/</span>
+                                        <span style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', fontWeight: 600, marginBottom: '24px' }}>/{currentVocab.pronunciation}/</span>
                                     )}
-                                    <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); speakWord(currentVocab?.word); }}
-                                            style={{
-                                                background: 'rgba(196,240,0,0.15)', border: '1px solid var(--accent-color)',
-                                                color: 'var(--accent-color)', padding: '0.5rem 1.5rem', borderRadius: '50px',
-                                                cursor: 'pointer', fontSize: '0.9rem', fontFamily: 'var(--font-body)',
-                                                display: 'flex', alignItems: 'center', gap: '0.4rem',
-                                            }}
-                                        >
-                                            <IconSpeaker size={16} color="var(--accent-color)" /> Pronounce
+                                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                                        <button onClick={(e) => { e.stopPropagation(); speakWord(currentVocab?.word, lesson?.languageId?.code); }} className="btn-secondary" style={{ padding: '8px 24px' }}>
+                                            <IconSpeaker size={16} /> PRONOUNCE
                                         </button>
                                         {isAIMode && (
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); getAIExplanation(currentVocab?.word, currentVocab?.translation); }}
-                                                style={{
-                                                    background: 'rgba(196,240,0,0.08)', border: '1px solid rgba(196,240,0,0.3)',
-                                                    color: 'var(--accent-color)', padding: '0.5rem 1.5rem', borderRadius: '50px',
-                                                    cursor: 'pointer', fontSize: '0.9rem', fontFamily: 'var(--font-body)',
-                                                    display: 'flex', alignItems: 'center', gap: '0.4rem',
-                                                }}
-                                            >
-                                                <IconBrain size={16} color="var(--accent-color)" /> AI Explain
+                                            <button onClick={(e) => { e.stopPropagation(); getAIExplanation(currentVocab?.word, currentVocab?.translation); }} className="btn-secondary" style={{ padding: '8px 24px', borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)' }}>
+                                                <IconBrain size={16} /> AI ANALYZE
                                             </button>
                                         )}
                                     </div>
@@ -183,108 +157,78 @@ Keep it concise.`,
                             )}
                         </motion.div>
 
-                        {/* AI Explanation Panel */}
                         {isAIMode && aiExplanation && (
-                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{
-                                marginTop: '1rem', padding: '1.5rem', background: 'rgba(196,240,0,0.03)',
-                                border: '1px solid rgba(196,240,0,0.1)', borderRadius: '15px',
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                    <IconSparkles size={14} color="var(--accent-color)" />
-                                    <span style={{ color: 'var(--accent-color)', fontSize: '0.8rem', letterSpacing: '0.15em' }}>AI EXPLANATION</span>
-                                </div>
-                                <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>
-                                    <ReactMarkdown
-                                        components={{
-                                            p: ({ node, ...props }) => <p style={{ margin: 0, marginBottom: '0.6rem' }} {...props} />,
-                                            strong: ({ node, ...props }) => <strong style={{ color: 'var(--accent-color)' }} {...props} />,
-                                        }}
-                                    >
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="panel" style={{ marginTop: '24px', padding: '32px', border: '1px solid var(--accent-primary)' }}>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#000', background: 'var(--accent-primary)', padding: '4px 8px', display: 'inline-block', marginBottom: '16px' }}>AI REPORT</div>
+                                <div style={{ color: 'var(--text-primary)', fontSize: '1.1rem', lineHeight: 1.6, fontWeight: 500 }}>
+                                    <ReactMarkdown components={{ p: ({ node, ...props }) => <p style={{ margin: 0, marginBottom: '12px' }} {...props} />, strong: ({ node, ...props }) => <strong style={{ color: 'var(--accent-primary)' }} {...props} /> }}>
                                         {aiExplanation}
                                     </ReactMarkdown>
                                 </div>
                             </motion.div>
                         )}
 
-                        {/* Navigation */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.5rem' }}>
-                            <button
-                                onClick={() => { setCurrentCard(Math.max(0, currentCard - 1)); setFlipped(false); setAiExplanation(''); }}
-                                disabled={currentCard === 0}
-                                style={{
-                                    background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
-                                    color: currentCard === 0 ? 'rgba(255,255,255,0.2)' : 'var(--text-color)',
-                                    padding: '0.7rem 2rem', borderRadius: '50px', cursor: currentCard === 0 ? 'default' : 'pointer',
-                                    fontFamily: 'var(--font-body)'
-                                }}
+                        <div style={{ display: 'flex', gap: '16px', marginTop: '24px' }}>
+                            <button 
+                                onClick={() => { 
+                                    setFlipped(false); 
+                                    setAiExplanation(''); 
+                                    setCurrentCard((prev) => (prev + 1) % vocab.length); 
+                                }} 
+                                className="btn-secondary" 
+                                style={{ flex: 1, borderColor: '#ff3366', color: '#ff3366' }}
                             >
-                                Previous
+                                NEEDS WORK
                             </button>
-                            <button
-                                onClick={() => { setCurrentCard(Math.min(vocab.length - 1, currentCard + 1)); setFlipped(false); setAiExplanation(''); }}
-                                disabled={currentCard === vocab.length - 1}
-                                style={{
-                                    background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
-                                    color: currentCard === vocab.length - 1 ? 'rgba(255,255,255,0.2)' : 'var(--text-color)',
-                                    padding: '0.7rem 2rem', borderRadius: '50px', cursor: currentCard === vocab.length - 1 ? 'default' : 'pointer',
-                                    fontFamily: 'var(--font-body)'
-                                }}
+                            <button 
+                                onClick={() => { 
+                                    const newSet = new Set(masteredCards);
+                                    newSet.add(currentCard);
+                                    setMasteredCards(newSet);
+                                    setFlipped(false); 
+                                    setAiExplanation('');
+                                    if (newSet.size < vocab.length) {
+                                        let next = (currentCard + 1) % vocab.length;
+                                        while(newSet.has(next) && newSet.size < vocab.length) {
+                                            next = (next + 1) % vocab.length;
+                                        }
+                                        setCurrentCard(next);
+                                    }
+                                }} 
+                                className="btn-primary" 
+                                style={{ flex: 1 }}
                             >
-                                Next
+                                GOT IT
                             </button>
                         </div>
                     </div>
                 )}
 
-                {/* Grammar Notes */}
                 {grammar.length > 0 && (
-                    <div style={{ marginBottom: '3rem' }}>
-                        <h3 style={{ color: 'var(--accent-color)', letterSpacing: '0.15em', fontSize: '0.9rem', marginBottom: '1.5rem' }}>GRAMMAR NOTES</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ marginBottom: '60px' }}>
+                        <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--accent-primary)', letterSpacing: '0.1em', marginBottom: '24px' }}>SYNTAX LOGIC</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             {grammar.map((note, i) => (
-                                <div key={i} style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '15px' }}>
-                                    <h4 style={{ color: 'var(--accent-color)', marginBottom: '0.5rem' }}>{note.title}</h4>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.6 }}>{note.explanation}</p>
-                                    {note.example && <p style={{ color: 'var(--text-color)', marginTop: '0.5rem', fontStyle: 'italic' }}>Example: {note.example}</p>}
+                                <div key={i} className="panel" style={{ padding: '32px' }}>
+                                    <h4 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 900, marginBottom: '12px' }}>{note.title}</h4>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: 1.6, fontWeight: 500 }}>{note.explanation}</p>
+                                    {note.example && <p style={{ color: 'var(--accent-primary)', marginTop: '16px', fontWeight: 600 }}>EXAMPLE: {note.example}</p>}
                                 </div>
                             ))}
                         </div>
                     </div>
                 )}
 
-                {/* AI Practice Sentences */}
                 {isAIMode && (
-                    <div style={{ marginBottom: '3rem' }}>
-                        <button
-                            onClick={getAIPractice} disabled={aiLoading}
-                            style={{
-                                background: 'rgba(196,240,0,0.08)', border: '1px solid rgba(196,240,0,0.2)',
-                                color: 'var(--accent-color)', padding: '0.8rem 2rem', borderRadius: '50px',
-                                cursor: 'pointer', fontSize: '0.9rem', fontFamily: 'var(--font-body)',
-                                display: 'flex', alignItems: 'center', gap: '0.5rem',
-                            }}
-                        >
-                            <IconBrain size={16} color="var(--accent-color)" />
-                            {aiLoading ? 'Generating...' : 'Generate AI Practice Exercise'}
+                    <div style={{ marginBottom: '60px' }}>
+                        <button onClick={getAIPractice} disabled={aiLoading} className="btn-secondary" style={{ borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)', width: '100%' }}>
+                            {aiLoading ? 'GENERATING...' : 'GENERATE AI DRILL'}
                         </button>
                         {aiSentences && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{
-                                marginTop: '1rem', padding: '1.5rem', background: 'rgba(196,240,0,0.03)',
-                                border: '1px solid rgba(196,240,0,0.1)', borderRadius: '15px',
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                    <IconSparkles size={14} color="var(--accent-color)" />
-                                    <span style={{ color: 'var(--accent-color)', fontSize: '0.8rem', letterSpacing: '0.15em' }}>AI PRACTICE</span>
-                                </div>
-                                <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>
-                                    <ReactMarkdown
-                                        components={{
-                                            p: ({ node, ...props }) => <p style={{ margin: 0, marginBottom: '0.6rem' }} {...props} />,
-                                            strong: ({ node, ...props }) => <strong style={{ color: 'var(--accent-color)' }} {...props} />,
-                                            ol: ({ node, ...props }) => <ol style={{ paddingLeft: '1.2rem', margin: '0.6rem 0' }} {...props} />,
-                                            li: ({ node, ...props }) => <li style={{ marginBottom: '0.4rem' }} {...props} />,
-                                        }}
-                                    >
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="panel" style={{ marginTop: '24px', padding: '32px', border: '1px solid var(--accent-primary)' }}>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#000', background: 'var(--accent-primary)', padding: '4px 8px', display: 'inline-block', marginBottom: '16px' }}>AI DRILL</div>
+                                <div style={{ color: 'var(--text-primary)', fontSize: '1.1rem', lineHeight: 1.6, fontWeight: 500 }}>
+                                    <ReactMarkdown components={{ p: ({ node, ...props }) => <p style={{ margin: 0, marginBottom: '12px' }} {...props} />, strong: ({ node, ...props }) => <strong style={{ color: 'var(--accent-primary)' }} {...props} /> }}>
                                         {aiSentences}
                                     </ReactMarkdown>
                                 </div>
@@ -293,41 +237,44 @@ Keep it concise.`,
                     </div>
                 )}
 
-                {/* Action Buttons */}
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                    {!completed ? (
-                        <button onClick={handleComplete} style={{
-                            background: 'var(--accent-color)', color: 'var(--bg-color)', border: 'none',
-                            padding: '1rem 3rem', borderRadius: '50px', fontFamily: 'var(--font-display)',
-                            textTransform: 'uppercase', fontWeight: 800, cursor: 'pointer', letterSpacing: '0.1em',
-                            fontSize: '1rem', transition: 'transform 0.3s', display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        }}
-                            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                        >
-                            <IconCheck size={18} color="var(--bg-color)" /> Complete Lesson
-                        </button>
-                    ) : (
-                        <div style={{ color: 'var(--accent-color)', fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <IconCheck size={22} color="var(--accent-color)" /> Lesson Completed! +{lesson.xpReward || 25} XP
+                <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', flexDirection: 'column' }}>
+                    {completed && (
+                        <div className="panel" style={{ padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', border: '1px solid var(--accent-primary)', background: 'rgba(210, 255, 0, 0.1)' }}>
+                            <IconCheck size={24} color="var(--accent-primary)" />
+                            <span style={{ color: 'var(--accent-primary)', fontSize: '1.2rem', fontWeight: 900 }}>MODULE CLEARED +{lesson.xpReward || 25} XP</span>
                         </div>
                     )}
-                    {quizId && (
-                        <button onClick={() => navigate(`/quiz/${quizId}`)} style={{
-                            background: 'transparent', color: 'var(--text-color)', border: '1px solid rgba(255,255,255,0.2)',
-                            padding: '1rem 3rem', borderRadius: '50px', fontFamily: 'var(--font-display)', textTransform: 'uppercase',
-                            fontWeight: 800, cursor: 'pointer', letterSpacing: '0.1em', fontSize: '1rem', transition: 'all 0.3s',
-                            display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        }}
-                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent-color)'; e.currentTarget.style.color = 'var(--accent-color)'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = 'var(--text-color)'; }}
-                        >
-                            <IconSword size={18} /> Take the Trial
-                        </button>
+                    
+                    {!completed ? (
+                        quizId ? (
+                            <button 
+                                onClick={() => navigate(`/quiz/${quizId}`)} 
+                                disabled={masteredCards.size < vocab.length}
+                                className={masteredCards.size < vocab.length ? "btn-secondary" : "btn-primary"} 
+                                style={{ flex: 1, opacity: masteredCards.size < vocab.length ? 0.3 : 1, padding: '24px' }}
+                            >
+                                <IconSword size={20} /> {masteredCards.size < vocab.length ? 'MASTER ALL CARDS TO UNLOCK TRIAL' : 'INITIATE TRIAL'}
+                            </button>
+                        ) : (
+                            <button 
+                                onClick={handleComplete} 
+                                disabled={masteredCards.size < vocab.length}
+                                className={masteredCards.size < vocab.length ? "btn-secondary" : "btn-primary"} 
+                                style={{ flex: 1, opacity: masteredCards.size < vocab.length ? 0.3 : 1, padding: '24px' }}
+                            >
+                                <IconCheck size={20} /> {masteredCards.size < vocab.length ? 'MASTER ALL CARDS TO COMPLETE' : 'MARK COMPLETE'}
+                            </button>
+                        )
+                    ) : (
+                        quizId && (
+                            <button onClick={() => navigate(`/quiz/${quizId}`)} className="btn-secondary" style={{ flex: 1, borderColor: '#fff', color: '#fff', padding: '24px' }}>
+                                <IconSword size={20} /> RETAKE TRIAL
+                            </button>
+                        )
                     )}
                 </div>
             </div>
-        </motion.div >
+        </motion.div>
     );
 };
 

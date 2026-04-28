@@ -6,11 +6,13 @@
         "dev:server": "cd server && npm run dev",
         "dev:client": "cd client && npm run dev",
         "dev:db": "rm -f ./.mongodb/mongod.lock && mongod --dbpath ./.mongodb",
+        "predev": "npx kill-port 27017 5000 5173",
         "dev": "npx concurrently \"npm run dev:db\" \"npm run dev:server\" \"npm run dev:client\"",
         "install:all": "npm install && cd server && npm install && cd ../client && npm install",
         "seed": "cd server && npm run seed"
     },
     "devDependencies": {
-        "concurrently": "^9.2.1"
+        "concurrently": "^9.2.1",
+        "kill-port": "^2.0.1"
     }
 }

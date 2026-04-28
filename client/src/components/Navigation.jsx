@@ -1,264 +1,133 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useAIMode } from '../context/AIModeContext';
 import { useAudio } from '../context/AudioContext';
 import { AIChat } from './AIChat';
-import { IconSparkles, IconVolumeOn, IconVolumeOff } from './Icons';
+import gsap from 'gsap';
 
 export const Navigation = ({ isOpen, onToggle }) => {
     const [showChat, setShowChat] = useState(false);
     const navigate = useNavigate();
-    const { user } = useAuth();
-    const { isAIMode, toggleAIMode, isTransitioning, transitionDirection } = useAIMode();
+    const { user, logout } = useAuth();
+    const { isAIMode, toggleAIMode } = useAIMode();
     const { isSoundOn, toggleSound } = useAudio();
+    const navRef = useRef(null);
 
-    const menuVariants = {
-        closed: { y: '-100%', opacity: 0, transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] } },
-        open: { y: '0%', opacity: 1, transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] } }
-    };
-
-    const navLinks = user ? [
-        { title: 'Dashboard', path: '/dashboard' },
-        { title: 'Languages', path: '/languages' },
-        { title: 'Progress', path: '/progress' },
-        { title: 'Leaderboard', path: '/leaderboard' },
+    const navItems = user ? [
+        { title: 'Dashboard', path: '/dashboard', num: '01' },
+        { title: 'Languages', path: '/languages', num: '02' },
+        { title: 'Progress', path: '/progress', num: '03' },
+        { title: 'Leaderboard', path: '/leaderboard', num: '04' },
     ] : [
-        { title: 'Home', path: '/' },
-        { title: 'Login', path: '/login' },
+        { title: 'Home', path: '/', num: '01' },
+        { title: 'Login', path: '/login', num: '02' },
     ];
+
+    const handleLogout = async () => { await logout(); navigate('/'); };
+
+    useEffect(() => {
+        if (isOpen && navRef.current) {
+            gsap.fromTo('.nav-link-anim', 
+                { x: -100, opacity: 0 },
+                { x: 0, opacity: 1, duration: 0.5, stagger: 0.05, ease: 'power4.out', delay: 0.2 }
+            );
+        }
+    }, [isOpen]);
 
     return (
         <>
-            {/* Menu button removed as it's now in Header */}
-
-            {/* Sound Toggle Button */}
-            <button
-                onClick={toggleSound}
-                style={{
-                    position: 'fixed', bottom: '30px', left: '30px',
-                    zIndex: 9000, background: 'none',
-                    color: 'var(--text-color)', border: 'none',
-                    cursor: 'pointer', mixBlendMode: 'difference',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '10px', opacity: 0.6,
-                    transition: 'opacity 0.3s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
-                className="interactive"
+            {/* Sound Toggle Floating Button */}
+            <button 
+                onClick={toggleSound} 
+                className="panel"
+                style={{ position: 'fixed', bottom: 32, left: 32, zIndex: 900, width: 56, height: 56, borderRadius: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isSoundOn ? 'var(--accent-primary)' : 'var(--text-secondary)' }}
             >
-                {isSoundOn ? <IconVolumeOn size={24} /> : <IconVolumeOff size={24} />}
+                {isSoundOn ? <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> : <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>}
             </button>
 
-            {/* Text Chat Shortcut Button */}
+            {/* AI Chat Button */}
             {isAIMode && user && !showChat && (
-                <motion.button
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    onClick={() => { setShowChat(true); isOpen && onToggle(); }}
-                    style={{
-                        position: 'fixed', bottom: '30px', right: '30px',
-                        zIndex: 9001, width: '60px', height: '60px',
-                        borderRadius: '50%', border: '2px solid var(--accent-color)',
-                        background: 'rgba(196, 240, 0, 0.1)',
-                        backdropFilter: 'blur(10px)',
-                        cursor: 'pointer', fontSize: '1.5rem',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        boxShadow: '0 0 30px rgba(196, 240, 0, 0.2)',
-                        animation: 'pulse 2s infinite'
-                    }}
-                    className="interactive"
+                <button 
+                    onClick={() => { setShowChat(true); isOpen && onToggle(); }} 
+                    className="btn-primary"
+                    style={{ position: 'fixed', bottom: 32, right: 32, zIndex: 901, width: 56, height: 56, padding: 0, borderRadius: '12px' }}
                 >
-                    <IconSparkles size={24} color="var(--accent-color)" />
-                </motion.button>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                </button>
             )}
 
-            {/* AI Text Chat Panel */}
             <AIChat isVisible={showChat && isAIMode} onClose={() => setShowChat(false)} />
 
             {/* Fullscreen Menu */}
             <AnimatePresence>
                 {isOpen && (
-                    <motion.div
-                        variants={menuVariants}
-                        initial="closed"
-                        animate="open"
-                        exit="closed"
-                        style={{
-                            position: 'fixed', inset: 0,
-                            background: isAIMode
-                                ? 'rgba(1, 1, 3, 0.98)'
-                                : 'rgba(1, 1, 3, 0.95)',
-                            backdropFilter: 'blur(30px)',
-                            zIndex: 9001, // Higher than Header (9000)
-                            display: 'flex', flexDirection: 'column',
-                            justifyContent: 'center', alignItems: 'center',
-                            gap: '3vh',
-                            padding: '100px 40px 40px 40px' // Ensure content is below potential header area if translucent
-                        }}
-                        className="interactive"
+                    <motion.div 
+                        ref={navRef}
+                        initial={{ x: '100%' }} 
+                        animate={{ x: 0 }} 
+                        exit={{ x: '100%' }}
+                        transition={{ duration: 0.6, ease: [0.76, 0, 0.24, 1] }}
+                        style={{ position: 'fixed', inset: 0, background: 'var(--bg-base)', zIndex: 2000, display: 'flex', flexDirection: 'column', padding: '120px 4vw' }}
                     >
-                        {/* Custom Close Button */}
-                        <button
-                            onClick={onToggle}
-                            style={{
-                                position: 'absolute', top: '30px', right: '40px',
-                                background: 'rgba(255, 255, 255, 0.05)',
-                                border: '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '50px', padding: '0.8rem 1.5rem',
-                                color: 'var(--text-color)', cursor: 'pointer',
-                                fontFamily: 'var(--font-display)', fontSize: '0.7rem',
-                                letterSpacing: '0.15em', fontWeight: 800
-                            }}
-                            className="interactive"
-                        >
+                        <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '30vw', background: 'var(--bg-surface)', borderRight: 'var(--border-sharp)', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px' }}>
+                            <span style={{ fontSize: '1.5rem', fontWeight: 900, fontFamily: 'var(--font-display)', color: '#fff', textTransform: 'uppercase', letterSpacing: '-0.05em', marginBottom: 'auto' }}>SpeakEase</span>
+                            
+                            <div style={{ marginTop: 'auto' }}>
+                                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>System Status</div>
+                                {user && (
+                                    <div className="panel" style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <span style={{ color: isAIMode ? 'var(--accent-primary)' : 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, textTransform: 'uppercase' }}>AI SYS // {isAIMode ? 'ON' : 'OFF'}</span>
+                                        <button onClick={toggleAIMode} style={{ width: 48, height: 24, background: isAIMode ? 'var(--accent-primary)' : 'var(--bg-surface-elevated)', border: 'none', position: 'relative', cursor: 'pointer' }}>
+                                            <motion.div animate={{ x: isAIMode ? 24 : 0 }} transition={{ type: 'spring', stiffness: 500 }} style={{ width: 24, height: 24, background: isAIMode ? '#000' : 'var(--text-secondary)', position: 'absolute', top: 0, left: 0 }} />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <button onClick={onToggle} className="btn-secondary" style={{ position: 'absolute', top: 24, right: '4vw' }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                             CLOSE
                         </button>
-                        {/* AI Mode Toggle */}
+
+                        <div style={{ marginLeft: '35vw', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', gap: '2vh' }}>
+                            {navItems.map((item) => (
+                                <div key={item.title} style={{ overflow: 'hidden' }}>
+                                    <div className="nav-link-anim" style={{ display: 'flex', alignItems: 'flex-start', gap: '24px' }}>
+                                        <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--accent-primary)', marginTop: '1rem' }}>{item.num}</span>
+                                        <Link 
+                                            to={item.path} 
+                                            onClick={onToggle} 
+                                            style={{ 
+                                                fontSize: 'clamp(3rem, 7vw, 6rem)', 
+                                                fontWeight: 900, 
+                                                fontFamily: 'var(--font-display)', 
+                                                color: 'var(--text-primary)', 
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '-0.04em',
+                                                display: 'block',
+                                                lineHeight: 1
+                                            }} 
+                                            onMouseEnter={(e) => {
+                                                gsap.to(e.currentTarget, { color: 'var(--accent-primary)', x: 20, duration: 0.3 });
+                                            }} 
+                                            onMouseLeave={(e) => {
+                                                gsap.to(e.currentTarget, { color: 'var(--text-primary)', x: 0, duration: 0.3 });
+                                            }}
+                                        >
+                                            {item.title}
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
                         {user && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 30 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.1, duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
-                                style={{
-                                    display: 'flex', alignItems: 'center', gap: '1.5rem',
-                                    marginBottom: '3vh', padding: '1.2rem 2.5rem',
-                                    background: isAIMode
-                                        ? 'rgba(196, 240, 0, 0.08)'
-                                        : 'rgba(255, 255, 255, 0.03)',
-                                    border: `1px solid ${isAIMode ? 'rgba(196, 240, 0, 0.3)' : 'rgba(255,255,255,0.08)'}`,
-                                    borderRadius: '60px',
-                                    transition: 'all 0.5s'
-                                }}
-                            >
-                                <span style={{
-                                    color: isAIMode ? 'var(--accent-color)' : 'var(--text-muted)',
-                                    fontFamily: 'var(--font-display)', fontSize: '0.85rem',
-                                    letterSpacing: '0.15em', textTransform: 'uppercase',
-                                    fontWeight: 700, transition: 'color 0.3s'
-                                }}>
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                        {isAIMode && !isTransitioning && <IconSparkles size={14} color="var(--accent-color)" />}
-                                        {isTransitioning ? (
-                                            <motion.span
-                                                animate={{ opacity: [0.4, 1, 0.4] }}
-                                                transition={{ repeat: Infinity, duration: 1 }}
-                                                style={{ color: 'var(--accent-color)' }}
-                                            >
-                                                {transitionDirection === 'to_traditional'
-                                                    ? 'SWITCHING BACK TO TRADITIONAL...'
-                                                    : 'BOOTING UP INTO AI MODE...'}
-                                            </motion.span>
-                                        ) : (
-                                            isAIMode ? 'AI MODE' : 'TRADITIONAL'
-                                        )}
-                                    </span>
-                                </span>
-
-                                {/* Toggle Switch */}
-                                <button
-                                    onClick={toggleAIMode}
-                                    disabled={isTransitioning}
-                                    style={{
-                                        width: '70px', height: '36px',
-                                        borderRadius: '18px', border: 'none',
-                                        background: isAIMode
-                                            ? 'linear-gradient(135deg, #c4f000, #00ffcc)'
-                                            : 'rgba(255, 255, 255, 0.15)',
-                                        cursor: isTransitioning ? 'wait' : 'pointer',
-                                        position: 'relative',
-                                        transition: 'background 0.5s',
-                                        outline: 'none',
-                                        boxShadow: isAIMode ? '0 0 25px rgba(196, 240, 0, 0.4)' : 'none'
-                                    }}
-                                >
-                                    <motion.div
-                                        animate={{
-                                            x: isAIMode ? 34 : 0,
-                                            rotate: isAIMode ? 360 : 0,
-                                        }}
-                                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                                        style={{
-                                            width: '28px', height: '28px',
-                                            borderRadius: '50%',
-                                            background: isAIMode ? '#050505' : '#fff',
-                                            position: 'absolute', top: '4px', left: '4px',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            fontSize: '0.8rem',
-                                            boxShadow: isAIMode
-                                                ? '0 0 10px rgba(196, 240, 0, 0.5)'
-                                                : '0 2px 6px rgba(0,0,0,0.3)'
-                                        }}
-                                    >
-                                        {isAIMode ? '✦' : '○'}
-                                    </motion.div>
-                                </button>
-                            </motion.div>
-                        )}
-
-                        {/* Nav Links */}
-                        {navLinks.map((link, i) => (
-                            <motion.div
-                                key={link.title}
-                                initial={{ opacity: 0, y: 50 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2 + (i * 0.1), duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
-                            >
-                                <Link
-                                    to={link.path}
-                                    onClick={onToggle}
-                                    style={{
-                                        fontFamily: 'var(--font-display)',
-                                        fontSize: '6vw', fontWeight: 800,
-                                        textTransform: 'uppercase',
-                                        color: 'var(--text-color)',
-                                        textDecoration: 'none',
-                                        lineHeight: 0.9,
-                                        transition: 'color 0.3s'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.color = 'var(--accent-color)';
-                                        e.currentTarget.style.transform = 'scale(1.05) skewX(-5deg)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.color = 'var(--text-color)';
-                                        e.currentTarget.style.transform = 'none';
-                                    }}
-                                >
-                                    {link.title}
-                                </Link>
-                            </motion.div>
-                        ))}
-
-                        {/* AI Chat shortcut in menu */}
-                        {isAIMode && user && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 50 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2 + navLinks.length * 0.1, duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
-                            >
-                                <button
-                                    onClick={() => { setShowChat(true); onToggle(); }}
-                                    style={{
-                                        fontFamily: 'var(--font-display)',
-                                        fontSize: '6vw', fontWeight: 800,
-                                        textTransform: 'uppercase',
-                                        color: 'var(--accent-color)',
-                                        background: 'none', border: 'none',
-                                        cursor: 'pointer', lineHeight: 0.9,
-                                        transition: 'all 0.3s',
-                                        textShadow: '0 0 30px rgba(196, 240, 0, 0.3)'
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05) skewX(-5deg)'}
-                                    onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
-                                >
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <IconSparkles size={32} color="var(--accent-color)" /> AI CHAT
-                                    </span>
-                                </button>
-                            </motion.div>
+                            <div style={{ position: 'absolute', bottom: 40, right: '4vw', display: 'flex', gap: '24px' }}>
+                                <button onClick={() => { handleLogout(); onToggle(); }} className="btn-secondary" style={{ padding: '12px 24px', fontSize: '0.85rem' }}>SIGN OUT</button>
+                            </div>
                         )}
                     </motion.div>
                 )}

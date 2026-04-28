@@ -2,8 +2,6 @@ import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { getLeaderboard } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { useAIMode } from '../context/AIModeContext';
-import { IconTrophy, IconXP, IconFire, IconGold, IconSilver, IconBronze, IconSparkles } from '../components/Icons';
 
 const Leaderboard = () => {
     const [users, setUsers] = useState([]);
@@ -11,15 +9,14 @@ const Leaderboard = () => {
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(true);
     const { user } = useAuth();
-    const { isAIMode } = useAIMode();
     const observer = useRef();
 
     const lastUserRef = (node) => {
         if (loading) return;
         if (observer.current) observer.current.disconnect();
-        observer.current = new IntersectionObserver(entries => {
+        observer.current = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting && hasMore) {
-                setPage(prevPage => prevPage + 1);
+                setPage((prev) => prev + 1);
             }
         });
         if (node) observer.current.observe(node);
@@ -30,102 +27,111 @@ const Leaderboard = () => {
             setLoading(true);
             try {
                 const res = await getLeaderboard();
-                // Simulation of pagination since the current mock API returns all users
                 const allUsers = res.data;
-                // Ensure data is sorted by totalXP before rendering
-                const sortedUsers = [...allUsers].sort((a, b) => (b.totalXP || 0) - (a.totalXP || 0));
-
+                const sorted = [...allUsers].sort((a, b) => (b.totalXP || 0) - (a.totalXP || 0));
                 const pageSize = 10;
-                const startIndex = (page - 1) * pageSize;
-                const nextBatch = sortedUsers.slice(startIndex, startIndex + pageSize);
-
-                if (page === 1) {
-                    setUsers(nextBatch);
-                } else {
-                    setUsers(prev => [...prev, ...nextBatch]);
-                }
-                setHasMore(startIndex + pageSize < sortedUsers.length);
+                const start = (page - 1) * pageSize;
+                const nextBatch = sorted.slice(start, start + pageSize);
+                if (page === 1) setUsers(nextBatch);
+                else setUsers((prev) => [...prev, ...nextBatch]);
+                setHasMore(start + pageSize < sorted.length);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
             }
-            catch (err) { console.error(err); }
-            finally { setLoading(false); }
         };
         fetchLeaderboard();
     }, [page]);
 
-    const getRankIcon = (index) => {
-        if (index === 0) return <IconGold size={28} />;
-        if (index === 1) return <IconSilver size={28} />;
-        if (index === 2) return <IconBronze size={28} />;
-        return <span style={{ width: 28, textAlign: 'center', display: 'inline-block', color: 'var(--text-muted)', fontWeight: 700 }}>{index + 1}</span>;
+    const getRankDisplay = (index) => {
+        if (index === 0) return { label: 'P1', color: '#D2FF00' };
+        if (index === 1) return { label: 'P2', color: '#E0E0E0' };
+        if (index === 2) return { label: 'P3', color: '#CD7F32' };
+        return { label: `P${index + 1}`, color: 'var(--text-secondary)' };
     };
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, filter: 'blur(10px)', transition: { duration: 0.8 } }}
-            className="page-section" style={{ justifyContent: 'flex-start', paddingTop: '8vh' }}
-        >
-            <div style={{ padding: '5vw', maxWidth: '1000px', margin: '0', width: '100%' }}>
-                <h3 style={{ color: 'var(--accent-color)', fontSize: '1rem', letterSpacing: '0.2em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <IconTrophy size={18} color="var(--accent-color)" /> THE NETWORK
-                    {isAIMode && <IconSparkles size={14} color="var(--accent-color)" />}
-                </h3>
-                <h1 style={{ fontSize: '8vw', lineHeight: 0.85, marginBottom: '3rem' }}>LEADERBOARD</h1>
+        <div className="page-container">
+            <div style={{ maxWidth: '800px', width: '100%', margin: '0 auto' }}>
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    style={{ marginBottom: '40px', borderLeft: '4px solid var(--accent-primary)', paddingLeft: '16px' }}
+                >
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 800, letterSpacing: '0.1em' }}>GLOBAL NETWORK</span>
+                    <h1 style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: '#fff' }}>LEADERBOARD</h1>
+                </motion.div>
 
                 {users.length === 0 && !loading ? (
-                    <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}>No travelers found yet.</p>
+                    <div className="panel" style={{ padding: '60px', textAlign: 'center' }}>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', fontWeight: 800 }}>NO OPERATIVES DETECTED.</p>
+                    </div>
                 ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {/* Table Header */}
+                        <div style={{ display: 'flex', padding: '0 24px', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 800 }}>
+                            <div style={{ width: '60px' }}>POS</div>
+                            <div style={{ flex: 1 }}>OPERATIVE</div>
+                            <div style={{ width: '100px', textAlign: 'right' }}>STREAK</div>
+                            <div style={{ width: '120px', textAlign: 'right' }}>XP</div>
+                        </div>
+
                         {users.map((u, i) => {
                             const isCurrentUser = user && (u._id === user._id || u.email === user.email);
+                            const rank = getRankDisplay(i);
                             return (
                                 <motion.div
                                     ref={i === users.length - 1 ? lastUserRef : null}
                                     key={u._id || i}
-                                    initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: (i % 10) * 0.06 }}
-                                    className="glass-card"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: (i % 10) * 0.05 }}
+                                    className="panel"
                                     style={{
-                                        display: 'flex', alignItems: 'center', gap: '1.2rem',
-                                        padding: '1.2rem 1.5rem',
-                                        background: isCurrentUser ? 'rgba(196,240,0,0.06)' : undefined,
-                                        borderColor: isCurrentUser ? 'rgba(196,240,0,0.2)' : undefined,
-                                        transition: 'all 0.3s'
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '24px',
+                                        border: isCurrentUser ? '1px solid var(--accent-primary)' : 'var(--border-sharp)',
+                                        background: isCurrentUser ? 'rgba(210, 255, 0, 0.05)' : undefined,
                                     }}
-                                    onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent-color)'}
-                                    onMouseLeave={(e) => e.currentTarget.style.borderColor = isCurrentUser ? 'rgba(196,240,0,0.2)' : 'rgba(255,255,255,0.08)'}
                                 >
-                                    {getRankIcon(i)}
-                                    <div style={{
-                                        width: 40, height: 40, borderRadius: '50%',
-                                        background: isAIMode ? 'linear-gradient(135deg, rgba(196,240,0,0.2), rgba(0,255,200,0.1))' : 'rgba(255,255,255,0.1)',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        fontSize: '1rem', fontWeight: 700, color: 'var(--accent-color)', flexShrink: 0,
-                                    }}>
-                                        {(u.name || 'U').charAt(0).toUpperCase()}
+                                    {/* Rank */}
+                                    <div style={{ width: '60px', fontSize: '1.2rem', fontWeight: 900, color: rank.color }}>
+                                        {rank.label}
                                     </div>
-                                    <div style={{ flex: 1 }}>
-                                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.2rem' }}>
-                                            {u.name || 'Unknown'} {isCurrentUser && <span style={{ color: 'var(--accent-color)', fontSize: '0.8rem' }}>(you)</span>}
-                                        </h3>
-                                        <div style={{ display: 'flex', gap: '1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                                <IconFire size={12} color="#ff6b35" /> {u.streakDays || 0} streak
-                                            </span>
+
+                                    {/* Name */}
+                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        <div style={{ fontWeight: 800, fontSize: '1.2rem', color: '#fff' }}>
+                                            {u.name || 'UNKNOWN'}
                                         </div>
+                                        {isCurrentUser && <span style={{ color: '#000', background: 'var(--accent-primary)', padding: '2px 6px', fontSize: '0.7rem', fontWeight: 800 }}>YOU</span>}
                                     </div>
-                                    <div style={{ color: 'var(--accent-color)', fontWeight: 800, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                        <IconXP size={18} color="var(--accent-color)" /> {u.totalXP || 0}
+
+                                    {/* Streak */}
+                                    <div style={{ width: '100px', textAlign: 'right', fontSize: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                                        {u.streakDays || 0} D
+                                    </div>
+
+                                    {/* XP */}
+                                    <div style={{ width: '120px', textAlign: 'right', fontWeight: 900, color: 'var(--accent-primary)', fontSize: '1.5rem' }}>
+                                        {u.totalXP || 0}
                                     </div>
                                 </motion.div>
                             );
                         })}
                     </div>
                 )}
+
                 {loading && (
-                    <div style={{ textAlign: 'center', marginTop: '2rem', color: 'var(--accent-color)', fontFamily: 'var(--font-display)', letterSpacing: '0.1em', fontSize: '0.8rem' }}>
-                        SYNCING NETWORK DATA...
+                    <div style={{ textAlign: 'center', padding: '40px' }}>
+                        <div style={{ color: 'var(--accent-primary)', fontWeight: 800, fontSize: '1.2rem' }}>SYNCING...</div>
                     </div>
                 )}
             </div>
-        </motion.div>
+        </div>
     );
 };
 

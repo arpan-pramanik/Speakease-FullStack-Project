@@ -1,47 +1,50 @@
 import { Canvas, useFrame } from '@react-three/fiber';
-import { EffectComposer, Bloom, Noise, Vignette } from '@react-three/postprocessing';
+import { EffectComposer, Noise, Vignette, Bloom } from '@react-three/postprocessing';
 import { useRef, useMemo } from 'react';
 import * as THREE from 'three';
 
-const ParticleField = () => {
-    const mesh = useRef();
+const SpeedLines = () => {
+    const linesRef = useRef();
+    const count = 300;
 
-    // Create 1000 random particles
     const [positions, scales] = useMemo(() => {
-        const pos = new Float32Array(1000 * 3);
-        const scale = new Float32Array(1000);
-        for (let i = 0; i < 1000; i++) {
-            pos[i * 3] = (Math.random() - 0.5) * 50;
-            pos[i * 3 + 1] = (Math.random() - 0.5) * 50;
-            pos[i * 3 + 2] = (Math.random() - 0.5) * 50;
-            scale[i] = Math.random();
+        const pos = new Float32Array(count * 3);
+        const scale = new Float32Array(count);
+        for (let i = 0; i < count; i++) {
+            // Distribute lines mostly at the edges, keeping center somewhat clear
+            const r = 5 + Math.random() * 20;
+            const theta = Math.random() * Math.PI * 2;
+            pos[i * 3] = r * Math.cos(theta); // x
+            pos[i * 3 + 1] = r * Math.sin(theta); // y
+            pos[i * 3 + 2] = (Math.random() - 0.5) * 100; // z (depth)
+            
+            scale[i] = Math.random() * 0.5 + 0.1;
         }
         return [pos, scale];
-    }, []);
+    }, [count]);
 
-    useFrame((state) => {
-        const time = state.clock.getElapsedTime();
-        if (mesh.current) {
-            mesh.current.rotation.y = time * 0.05;
-            mesh.current.position.y = Math.sin(time * 0.2) * 2;
+    useFrame((state, delta) => {
+        if (!linesRef.current) return;
+        
+        const posAttr = linesRef.current.geometry.attributes.position;
+        const speed = 60 * delta; // Extremely fast movement towards camera
+
+        for (let i = 0; i < count; i++) {
+            posAttr.array[i * 3 + 2] += speed;
+            if (posAttr.array[i * 3 + 2] > 20) {
+                posAttr.array[i * 3 + 2] = -50 - Math.random() * 50; // Reset far back
+            }
         }
+        posAttr.needsUpdate = true;
     });
 
     return (
-        <points ref={mesh}>
-            <bufferGeometry>
-                <bufferAttribute attach="attributes-position" count={1000} array={positions} itemSize={3} />
-                <bufferAttribute attach="attributes-scale" count={1000} array={scales} itemSize={1} />
-            </bufferGeometry>
-            <pointsMaterial
-                size={0.15}
-                color="#c4f000"
-                transparent
-                opacity={0.6}
-                sizeAttenuation
-                blending={THREE.AdditiveBlending}
-            />
-        </points>
+        <instancedMesh ref={linesRef} args={[null, null, count]}>
+            <cylinderGeometry args={[0.02, 0.02, 4, 3]} />
+            <meshBasicMaterial color="#ffffff" transparent opacity={0.4} />
+            <instancedBufferAttribute attach="geometry-attributes-position" args={[positions, 3]} />
+            <instancedBufferAttribute attach="geometry-attributes-scale" args={[scales, 1]} />
+        </instancedMesh>
     );
 };
 
@@ -50,22 +53,24 @@ const AmbientEnvironment = () => {
         <>
             <color attach="background" args={['#050505']} />
             <fog attach="fog" args={['#050505', 10, 40]} />
-            <ambientLight intensity={0.2} />
-            <directionalLight position={[10, 10, 5]} intensity={1} color="#c4f000" />
-            <directionalLight position={[-10, 0, -5]} intensity={0.5} color="#00ffff" />
-            <ParticleField />
+            
+            {/* Minimalist central glow */}
+            <pointLight position={[0, 0, -10]} intensity={2} color="#D2FF00" distance={30} />
+            <ambientLight intensity={0.1} />
+            
+            <SpeedLines />
         </>
     );
 };
 
 export const Scene = () => {
     return (
-        <div id="canvas-container">
-            <Canvas camera={{ position: [0, 0, 15], fov: 45 }} dpr={[1, 2]}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: -1, pointerEvents: 'none', background: '#050505' }}>
+            <Canvas camera={{ position: [0, 0, 5], fov: 75 }} dpr={[1, 2]}>
                 <AmbientEnvironment />
                 <EffectComposer disableNormalPass>
-                    <Bloom luminanceThreshold={0.2} mipmapBlur intensity={1.5} />
-                    <Noise opacity={0.025} />
+                    <Bloom luminanceThreshold={0.2} mipmapBlur intensity={1.5} radius={0.5} />
+                    <Noise opacity={0.05} />
                     <Vignette eskil={false} offset={0.1} darkness={1.1} />
                 </EffectComposer>
             </Canvas>

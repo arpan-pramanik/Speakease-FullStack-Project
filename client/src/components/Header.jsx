@@ -1,124 +1,63 @@
-import { motion } from 'framer-motion';
+import { useRef, useEffect, useState } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { IconLogout, IconUser, IconMenu } from './Icons';
 import { ProfilePanel } from './ProfilePanel';
-import { useState } from 'react';
 
 export const Header = ({ onToggleMenu }) => {
     const { user } = useAuth();
     const [showProfile, setShowProfile] = useState(false);
-
-    if (!user) return null;
+    const { scrollY } = useScroll();
+    
+    // Hide header slightly on scroll down, show on scroll up
+    const headerY = useTransform(scrollY, [0, 100], [0, -10]);
+    const headerOpacity = useTransform(scrollY, [0, 100], [1, 0.9]);
 
     return (
         <>
             <motion.header
-                initial={{ y: -100 }}
-                animate={{ y: 0 }}
                 style={{
                     position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: '80px',
-                    padding: '0 40px',
+                    top: '0',
+                    left: '0',
+                    right: '0',
+                    y: headerY,
+                    opacity: headerOpacity,
+                    zIndex: 1000,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    zIndex: 9000,
-                    background: 'rgba(5, 5, 5, 0.4)',
-                    backdropFilter: 'blur(15px)',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+                    padding: '24px 4vw',
+                    background: 'linear-gradient(to bottom, rgba(17, 17, 18, 0.9), transparent)',
+                    pointerEvents: 'none',
                 }}
             >
-                {/* Section 1: Logo (Left) */}
-                <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
-                    <Link to="/dashboard" style={{ textDecoration: 'none' }} className="interactive">
-                        <div style={{ display: 'flex', gap: '0.15em', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.4rem' }}>
-                            <span style={{ color: 'var(--text-color)' }}>SPEAK</span>
-                            <span style={{ color: 'var(--accent-color)' }}>EASE</span>
-                        </div>
+                <div style={{ pointerEvents: 'auto' }}>
+                    <Link to={user ? "/dashboard" : "/"} style={{ textDecoration: 'none' }}>
+                        <span style={{ fontSize: '1.5rem', fontWeight: 900, fontFamily: 'var(--font-display)', color: '#fff', textTransform: 'uppercase', letterSpacing: '-0.05em' }}>
+                            SpeakEase
+                        </span>
                     </Link>
                 </div>
 
-                {/* Section 2: Menu Trigger (Center) */}
-                <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-                    <button
-                        onClick={onToggleMenu}
-                        style={{
-                            background: 'rgba(255, 255, 255, 0.03)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            borderRadius: '50px',
-                            padding: '0.6rem 1.5rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.8rem',
-                            color: 'var(--text-color)',
-                            cursor: 'pointer',
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '0.8rem',
-                            letterSpacing: '0.15em',
-                            textTransform: 'uppercase',
-                            fontWeight: 700,
-                            transition: 'all 0.3s'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'}
-                        className="interactive"
-                    >
-                        <IconMenu size={16} color="var(--accent-color)" />
-                        MENU
-                    </button>
-                </div>
-
-                {/* Section 3: Profile (Right) */}
-                <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1.2rem' }}>
-                    <div
-                        onClick={() => setShowProfile(true)}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '1rem',
-                            cursor: 'pointer',
-                            padding: '0.5rem 1rem',
-                            borderRadius: '50px',
-                            transition: 'background 0.3s'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                        className="interactive"
-                    >
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <span style={{ color: 'var(--text-color)', fontSize: '0.9rem', fontWeight: 600 }}>{user.name}</span>
-                            <span style={{ color: 'var(--accent-color)', fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>LVL 12</span>
-                        </div>
-                        <div
-                            style={{
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '50%',
-                                background: 'linear-gradient(135deg, var(--accent-color), #00ffcc)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: '#050505',
-                                fontWeight: 800,
-                                fontSize: '1rem',
-                                boxShadow: '0 0 15px rgba(196, 240, 0, 0.3)'
-                            }}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '24px', pointerEvents: 'auto' }}>
+                    {user && (
+                        <button 
+                            onClick={() => setShowProfile(true)} 
+                            className="btn-secondary"
+                            style={{ padding: '8px 16px', fontSize: '0.8rem' }}
                         >
-                            {user.name?.charAt(0).toUpperCase()}
-                        </div>
-                    </div>
+                            <span style={{ color: 'var(--accent-primary)' }}>USR //</span> {user.name}
+                        </button>
+                    )}
+                    <button onClick={onToggleMenu} className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.8rem' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                        <span>MENU</span>
+                    </button>
                 </div>
             </motion.header>
 
-            {/* Profile Panel Overlay */}
-            <ProfilePanel
-                isOpen={showProfile}
-                onClose={() => setShowProfile(false)}
-            />
+            <ProfilePanel isOpen={showProfile} onClose={() => setShowProfile(false)} />
         </>
     );
 };

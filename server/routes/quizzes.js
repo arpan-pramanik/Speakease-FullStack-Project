@@ -35,8 +35,8 @@ router.get('/', protect, adminOnly, async (req, res) => {
     }
 });
 
-// @route   POST /api/quizzes (Admin)
-router.post('/', protect, adminOnly, async (req, res) => {
+// @route   POST /api/quizzes (AI Generation & Admin)
+router.post('/', protect, async (req, res) => {
     try {
         const quiz = await Quiz.create(req.body);
         res.status(201).json(quiz);

@@ -1,70 +1,26 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getQuiz, submitQuiz } from '../services/api';
-import { useAIMode } from '../context/AIModeContext';
-import { askGemini } from '../services/gemini';
-import { IconCheck, IconX, IconSparkles, IconBrain, IconSword } from '../components/Icons';
+import { getQuiz, submitQuiz, completeLesson } from '../services/api';
 
 const Quiz = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { isAIMode } = useAIMode();
     const [quiz, setQuiz] = useState(null);
     const [loading, setLoading] = useState(true);
+    
+    // Exam State
     const [currentQ, setCurrentQ] = useState(0);
-    const [selected, setSelected] = useState(null); // For simple MCQ
-    const [showResult, setShowResult] = useState(false);
-    const [score, setScore] = useState(0);
-    const [answers, setAnswers] = useState([]);
+    const [userAnswers, setUserAnswers] = useState({});
     const [finished, setFinished] = useState(false);
-    const [finalResult, setFinalResult] = useState(null);
-    const [aiHint, setAiHint] = useState('');
-    const [hintLoading, setHintLoading] = useState(false);
-    const [aiExplanation, setAiExplanation] = useState('');
+    const [finalScore, setFinalScore] = useState(0);
+    const [finalPercentage, setFinalPercentage] = useState(0);
+    const [gradedResults, setGradedResults] = useState([]);
 
-    // Specific states for interactive types
-    const [formSentence, setFormSentence] = useState([]);
-    const [availableBlocks, setAvailableBlocks] = useState([]);
-
+    // Matching local UI state
     const [matchColumnA, setMatchColumnA] = useState([]);
     const [matchColumnB, setMatchColumnB] = useState([]);
     const [selectedMatchA, setSelectedMatchA] = useState(null);
-    const [matchedPairs, setMatchedPairs] = useState([]);
-
-    const [fillBlankAnswer, setFillBlankAnswer] = useState('');
-
-    // Process new question
-    useEffect(() => {
-        if (!quiz || !quiz.questions[currentQ]) return;
-        const q = quiz.questions[currentQ];
-
-        // Reset states
-        setSelected(null);
-        setShowResult(false);
-        setAiHint('');
-        setAiExplanation('');
-
-        if (q.questionType === 'form-sentence') {
-            setFormSentence([]);
-            // ensure options are shuffled
-            setAvailableBlocks([...q.options].sort(() => Math.random() - 0.5));
-        } else if (q.questionType === 'matching') {
-            const pairs = q.options; // assume ["Dog:Perro", "Cat:Gato"]
-            const a = [];
-            const b = [];
-            pairs.forEach(p => {
-                const [en, sp] = p.split(':');
-                if (en && sp) { a.push(en); b.push(sp); }
-            });
-            setMatchColumnA(a.sort(() => Math.random() - 0.5));
-            setMatchColumnB(b.sort(() => Math.random() - 0.5));
-            setMatchedPairs([]);
-            setSelectedMatchA(null);
-        } else if (q.questionType === 'fill-blank') {
-            if (q.options.length === 0) setFillBlankAnswer('');
-        }
-    }, [quiz, currentQ]);
 
     useEffect(() => {
         const fetchQuiz = async () => {
@@ -75,212 +31,271 @@ const Quiz = () => {
         fetchQuiz();
     }, [id]);
 
-    const handleFormSubmit = async () => {
-        if (showResult) return;
+    useEffect(() => {
+        if (!quiz || !quiz.questions[currentQ]) return;
         const q = quiz.questions[currentQ];
-        const attempt = formSentence.join(' ');
-        const isCorrect = attempt === q.correctAnswer;
-        processResult(attempt, isCorrect);
+        if (q.questionType === 'matching') {
+            const pairs = q.options;
+            const a = [];
+            const b = [];
+            pairs.forEach(p => {
+                const [en, sp] = p.split(':');
+                if (en && sp) { a.push(en); b.push(sp); }
+            });
+            setMatchColumnA(a.sort(() => Math.random() - 0.5));
+            setMatchColumnB(b.sort(() => Math.random() - 0.5));
+            setSelectedMatchA(null);
+        }
+    }, [quiz, currentQ]);
+
+    const handleSelectMCQ = (option) => {
+        setUserAnswers(prev => ({ ...prev, [currentQ]: option }));
+    };
+
+    const handleFillBlank = (val) => {
+        setUserAnswers(prev => ({ ...prev, [currentQ]: val }));
     };
 
     const handleMatchSelectA = (word) => {
-        if (showResult) return;
+        const currentPairs = userAnswers[currentQ] || [];
+        const existingPair = currentPairs.find(p => p.startsWith(word + ':'));
+        if (existingPair) {
+            setUserAnswers(prev => ({ ...prev, [currentQ]: currentPairs.filter(p => p !== existingPair) }));
+            setSelectedMatchA(null);
+            return;
+        }
         setSelectedMatchA(word);
     };
 
     const handleMatchSelectB = (wordB) => {
-        if (showResult || !selectedMatchA) return;
-        const q = quiz.questions[currentQ];
-        const validPairs = q.options; // ["Dog:Perro"]
-        const isValid = validPairs.includes(`${selectedMatchA}:${wordB}`);
+        if (!selectedMatchA) return;
+        const currentPairs = userAnswers[currentQ] || [];
+        if (currentPairs.some(p => p.endsWith(':' + wordB))) return;
 
-        if (isValid) {
-            const newPairs = [...matchedPairs, selectedMatchA];
-            setMatchedPairs(newPairs);
-            setSelectedMatchA(null);
-
-            // if all paired, proceed
-            if (newPairs.length === matchColumnA.length) {
-                processResult('Matches complete', true);
-            }
-        } else {
-            // instant fail or just reset
-            setSelectedMatchA(null);
-            // Optionally count wrong attempts
-            processResult(`${selectedMatchA}:${wordB}`, false);
-        }
+        const newPairs = [...currentPairs, `${selectedMatchA}:${wordB}`];
+        setUserAnswers(prev => ({ ...prev, [currentQ]: newPairs }));
+        setSelectedMatchA(null);
     };
 
-    const processResult = async (userAttempt, isCorrect) => {
-        const question = quiz.questions[currentQ];
-        setShowResult(true);
-        if (isCorrect) setScore(prev => prev + (question.points || 10));
-        setAnswers(prev => [...prev, { question: question.question, selected: userAttempt, correct: question.correctAnswer, isCorrect }]);
-
-        if (isAIMode && !isCorrect) {
-            try {
-                const exp = await askGemini(
-                    `In a language test, question: "${question.question}". User put "${userAttempt}", correct is "${question.correctAnswer}". Why is the user wrong? Be encouraging.`,
-                    'Language tutor context.'
-                );
-                setAiExplanation(exp);
-            } catch { setAiExplanation(''); }
-        }
-    };
-
-    const handleSelectMCQ = (option) => {
-        if (showResult) return;
-        setSelected(option);
-        const isCorrect = option === quiz.questions[currentQ].correctAnswer;
-        processResult(option, isCorrect);
-    };
-
-    const getAIHint = async () => {
-        if (!isAIMode || hintLoading) return;
-        setHintLoading(true);
-        try {
-            const q = quiz.questions[currentQ];
-            const hint = await askGemini(
-                `Give a subtle hint for this question: "${q.question}". One sentence.`,
-                'Helpful hints only.'
-            );
-            setAiHint(hint);
-        } catch { setAiHint('Think about context.'); }
-        finally { setHintLoading(false); }
-    };
-
-    const handleNext = async () => {
+    const handleNext = () => {
         if (currentQ < quiz.questions.length - 1) {
             setCurrentQ(prev => prev + 1);
         } else {
-            const totalPoints = quiz.questions.reduce((acc, q) => acc + (q.points || 10), 0);
-            const percentage = Math.round((score / totalPoints) * 100);
-            try {
-                const res = await submitQuiz({ quizId: id, lessonId: quiz.lessonId, score, totalPoints, percentage });
-                setFinalResult(res.data);
-            } catch (err) { console.error(err); }
-            setFinished(true);
+            submitExam();
         }
     };
 
-    if (loading) return null;
-    if (!quiz) return <div className="page-section"><h2 style={{ color: 'red' }}>Trial not found</h2></div>;
+    const submitExam = async () => {
+        let earnedScore = 0;
+        let totalPoints = 0;
+        const results = [];
+
+        quiz.questions.forEach((q, idx) => {
+            const userAnswer = userAnswers[idx];
+            const points = q.points || 10;
+            totalPoints += points;
+            let isCorrect = false;
+
+            if (q.questionType === 'multiple-choice' || q.questionType === 'true-false') {
+                isCorrect = userAnswer === q.correctAnswer;
+            } else if (q.questionType === 'fill-blank') {
+                isCorrect = userAnswer && userAnswer.trim().toLowerCase() === q.correctAnswer.toLowerCase();
+            } else if (q.questionType === 'matching') {
+                const attemptPairs = userAnswer || [];
+                const correctPairs = q.options;
+                const allCorrect = correctPairs.every(p => attemptPairs.includes(p)) && attemptPairs.length === correctPairs.length;
+                isCorrect = allCorrect;
+            }
+
+            if (isCorrect) earnedScore += points;
+            results.push({ question: q, userAnswer, isCorrect });
+        });
+
+        const percentage = Math.round((earnedScore / totalPoints) * 100);
+        setFinalScore(earnedScore);
+        setFinalPercentage(percentage);
+        setGradedResults(results);
+        setFinished(true);
+
+        try {
+            await submitQuiz({ quizId: id, lessonId: quiz.lessonId, score: earnedScore, totalPoints, percentage });
+            if (percentage >= 70) {
+                await completeLesson(quiz.lessonId);
+            }
+        } catch (err) { console.error(err); }
+    };
+
+    if (loading) return <div className="preloader">INITIALIZING TRIAL...</div>;
+    if (!quiz) return <div className="page-container"><h2 style={{ color: 'var(--accent-error)' }}>TRIAL NOT FOUND</h2></div>;
 
     if (finished) {
-        // Render results...
-        const totalPoints = quiz.questions.reduce((acc, q) => acc + (q.points || 10), 0);
-        const percentage = Math.round((score / totalPoints) * 100);
-        const passed = percentage >= 60;
+        const passed = finalPercentage >= 70;
         return (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="page-section" style={{ justifyContent: 'center', alignItems: 'center' }}>
-                <div style={{ textAlign: 'center', maxWidth: '600px', padding: '3rem' }}>
-                    <h3 style={{ color: 'var(--accent-color)', letterSpacing: '0.2em' }}>TRIAL COMPLETE</h3>
-                    <h1 style={{ fontSize: '8vw', color: passed ? 'var(--accent-color)' : '#ff4b4b' }}>{percentage}%</h1>
-                    <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
-                        <button onClick={() => navigate('/dashboard')} className="interactive" style={{ background: 'var(--text-color)', color: 'var(--bg-color)', padding: '1rem 2rem', borderRadius: '50px', border: 'none', fontWeight: 800 }}>Atlas</button>
-                        <button onClick={() => navigate('/progress')} className="interactive" style={{ background: 'transparent', color: 'var(--text-color)', border: '1px solid #333', padding: '1rem 2rem', borderRadius: '50px', fontWeight: 800 }}>Progress</button>
+            <div className="page-container flex-center" style={{ padding: '60px 20px', alignItems: 'flex-start' }}>
+                <div style={{ width: '100%', maxWidth: '800px', margin: '0 auto' }}>
+                    <div className="panel" style={{ textAlign: 'center', padding: '60px', marginBottom: '40px', border: `1px solid ${passed ? 'var(--accent-primary)' : 'var(--accent-error)'}`, background: passed ? 'rgba(210, 255, 0, 0.05)' : 'rgba(255, 51, 102, 0.05)' }}>
+                        <div style={{ fontSize: '1rem', fontWeight: 800, letterSpacing: '0.2em', color: 'var(--text-secondary)', marginBottom: '16px' }}>{passed ? 'MODULE CLEARED' : 'TRIAL FAILED'}</div>
+                        <h1 style={{ fontSize: 'clamp(4rem, 10vw, 8rem)', color: passed ? 'var(--accent-primary)' : 'var(--accent-error)', lineHeight: 1, marginBottom: '24px' }}>{finalPercentage}%</h1>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', fontWeight: 600, marginBottom: '40px' }}>
+                            SCORE: {finalScore} / {quiz.questions.reduce((a, b) => a + (b.points || 10), 0)}
+                        </p>
+                        <button onClick={() => navigate('/dashboard')} className="btn-primary" style={{ padding: '16px 48px' }}>RETURN TO COMMAND</button>
+                    </div>
+
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#fff', marginBottom: '24px', letterSpacing: '0.1em' }}>TRIAL LOGS</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {gradedResults.map((res, i) => (
+                            <div key={i} className="panel" style={{ padding: '24px', borderLeft: `4px solid ${res.isCorrect ? 'var(--accent-primary)' : 'var(--accent-error)'}` }}>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 800, marginBottom: '8px' }}>QUESTION {i + 1}</div>
+                                <h4 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '16px' }}>{res.question.question}</h4>
+                                
+                                <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+                                    <div style={{ flex: 1, minWidth: '200px' }}>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 800 }}>YOUR INPUT</span>
+                                        <div style={{ fontSize: '1.1rem', color: res.isCorrect ? 'var(--accent-primary)' : 'var(--accent-error)', fontWeight: 600, marginTop: '4px' }}>
+                                            {Array.isArray(res.userAnswer) ? res.userAnswer.join(', ') : (res.userAnswer || 'NO DATA')}
+                                        </div>
+                                    </div>
+                                    {!res.isCorrect && (
+                                        <div style={{ flex: 1, minWidth: '200px' }}>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 800 }}>TARGET</span>
+                                            <div style={{ fontSize: '1.1rem', color: '#fff', fontWeight: 600, marginTop: '4px' }}>
+                                                {res.question.correctAnswer}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
-            </motion.div>
+            </div>
         );
     }
 
     const question = quiz.questions[currentQ];
+    const answer = userAnswers[currentQ];
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="page-section" style={{ alignItems: 'center', paddingTop: '10vh' }}>
-            <div style={{ width: '100%', maxWidth: '700px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', color: 'var(--text-muted)' }}>
-                    <span>THE TRIAL</span>
+        <div className="page-container flex-center">
+            <div style={{ width: '100%', maxWidth: '800px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', color: 'var(--text-secondary)', fontWeight: 800 }}>
+                    <span>TRIAL ACTIVE</span>
                     <span>{currentQ + 1} / {quiz.questions.length}</span>
                 </div>
-                {/* Progress bar */}
-                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', marginBottom: '3rem', borderRadius: '2px' }}>
-                    <div style={{ height: '100%', background: 'var(--accent-color)', width: `${((currentQ + 1) / quiz.questions.length) * 100}%`, transition: 'width 0.3s' }} />
+                
+                <div style={{ width: '100%', height: '4px', background: 'var(--bg-surface-elevated)', marginBottom: '40px', borderRadius: '2px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', background: 'var(--accent-primary)', width: `${((currentQ + 1) / quiz.questions.length) * 100}%`, transition: 'width 0.3s' }} />
                 </div>
 
-                <h2 style={{ fontSize: '2rem', marginBottom: '2rem' }}>{question.question}</h2>
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={currentQ}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <h2 style={{ fontSize: '2.5rem', marginBottom: '40px', color: '#fff' }}>{question.question}</h2>
 
-                {/* Question Types Router */}
-                {['multiple-choice', 'true-false'].includes(question.questionType) && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {question.options.map((opt, i) => {
-                            let bg = 'rgba(255,255,255,0.03)';
-                            let border = 'rgba(255,255,255,0.08)';
-                            if (showResult && opt === question.correctAnswer) { bg = 'rgba(196,240,0,0.1)'; border = 'var(--accent-color)'; }
-                            else if (showResult && selected === opt) { bg = 'rgba(255,75,75,0.1)'; border = '#ff4b4b'; }
-                            return (
-                                <button key={i} onClick={() => handleSelectMCQ(opt)} disabled={showResult} className="interactive" style={{ padding: '1.2rem', textAlign: 'left', background: bg, border: `1px solid ${border}`, borderRadius: '15px', color: 'var(--text-color)', cursor: showResult ? 'default' : 'pointer' }}>
-                                    {opt}
-                                </button>
-                            );
-                        })}
-                    </div>
-                )}
+                        {['multiple-choice', 'true-false'].includes(question.questionType) && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                {question.options.map((opt, i) => {
+                                    const isSelected = answer === opt;
+                                    return (
+                                        <button 
+                                            key={i} 
+                                            onClick={() => handleSelectMCQ(opt)} 
+                                            style={{ 
+                                                padding: '24px', textAlign: 'left', 
+                                                background: isSelected ? 'var(--accent-primary)' : 'var(--bg-surface)', 
+                                                color: isSelected ? '#000' : '#fff', 
+                                                border: 'var(--border-sharp)',
+                                                fontSize: '1.2rem', fontWeight: 600, cursor: 'pointer', transition: 'var(--transition-snappy)' 
+                                            }}
+                                        >
+                                            {opt}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
 
-                {question.questionType === 'form-sentence' && (
-                    <div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', minHeight: '60px', padding: '1rem', borderBottom: '2px solid rgba(255,255,255,0.2)', marginBottom: '2rem' }}>
-                            {formSentence.map((w, i) => (
-                                <motion.button key={i} initial={{ scale: 0 }} animate={{ scale: 1 }} className="interactive" onClick={() => !showResult && (setFormSentence(prev => prev.filter((_, idx) => idx !== i)), setAvailableBlocks(prev => [...prev, w]))} style={{ padding: '0.8rem 1.5rem', background: 'var(--text-color)', color: 'var(--bg-color)', border: 'none', borderRadius: '10px', fontWeight: 'bold' }}>
-                                    {w}
-                                </motion.button>
-                            ))}
-                        </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '2rem' }}>
-                            {availableBlocks.map((w, i) => (
-                                <motion.button key={i} className="interactive" onClick={() => !showResult && (setAvailableBlocks(prev => prev.filter((_, idx) => idx !== i)), setFormSentence(prev => [...prev, w]))} style={{ padding: '0.8rem 1.5rem', background: 'rgba(255,255,255,0.1)', color: 'var(--text-color)', border: 'none', borderRadius: '10px' }}>
-                                    {w}
-                                </motion.button>
-                            ))}
-                        </div>
-                        {!showResult && <button className="interactive" onClick={handleFormSubmit} style={{ width: '100%', padding: '1rem', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '50px', fontWeight: 'bold', textTransform: 'uppercase' }}>Check</button>}
-                    </div>
-                )}
+                        {question.questionType === 'matching' && (
+                            <div style={{ display: 'flex', gap: '24px', marginBottom: '40px' }}>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    {matchColumnA.map(w => {
+                                        const isPaired = (answer || []).some(p => p.startsWith(w + ':'));
+                                        const isSelected = selectedMatchA === w;
+                                        return (
+                                            <button 
+                                                key={w} 
+                                                onClick={() => handleMatchSelectA(w)} 
+                                                style={{ 
+                                                    padding: '24px', 
+                                                    background: isSelected ? 'var(--accent-primary)' : 'var(--bg-surface-elevated)', 
+                                                    color: isSelected ? '#000' : '#fff', 
+                                                    border: isPaired ? '1px solid var(--accent-primary)' : 'var(--border-sharp)', 
+                                                    fontWeight: 800, fontSize: '1.2rem', 
+                                                    opacity: isPaired ? 0.3 : 1, cursor: 'pointer' 
+                                                }}
+                                            >
+                                                {w}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    {matchColumnB.map(w => {
+                                        const isPaired = (answer || []).some(p => p.endsWith(':' + w));
+                                        return (
+                                            <button 
+                                                key={w} 
+                                                onClick={() => handleMatchSelectB(w)} 
+                                                style={{ 
+                                                    padding: '24px', 
+                                                    background: 'var(--bg-surface-elevated)', color: '#fff', 
+                                                    border: isPaired ? '1px solid var(--accent-primary)' : 'var(--border-sharp)', 
+                                                    fontWeight: 800, fontSize: '1.2rem', 
+                                                    opacity: isPaired ? 0.3 : 1, cursor: 'pointer' 
+                                                }}
+                                            >
+                                                {w}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
 
-                {question.questionType === 'matching' && (
-                    <div style={{ display: 'flex', gap: '2rem', marginBottom: '2rem' }}>
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {matchColumnA.map(w => (
-                                <button key={w} onClick={() => handleMatchSelectA(w)} disabled={matchedPairs.includes(w) || showResult} className="interactive" style={{ padding: '1rem', background: selectedMatchA === w ? 'var(--accent-color)' : (matchedPairs.includes(w) ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)'), color: selectedMatchA === w ? '#000' : 'var(--text-color)', border: 'none', borderRadius: '10px', opacity: matchedPairs.includes(w) ? 0.3 : 1 }}>{w}</button>
-                            ))}
-                        </div>
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {matchColumnB.map(w => {
-                                // visually pair them or just keep them active
-                                const isPaired = question.options.some(opt => {
-                                    const [a, b] = opt.split(':');
-                                    return b === w && matchedPairs.includes(a);
-                                });
-                                return (
-                                    <button key={w} onClick={() => handleMatchSelectB(w)} disabled={isPaired || showResult} className="interactive" style={{ padding: '1rem', background: isPaired ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)', color: 'var(--text-color)', border: 'none', borderRadius: '10px', opacity: isPaired ? 0.3 : 1 }}>{w}</button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-
-                {question.questionType === 'fill-blank' && (
-                    <div>
-                        <input className="interactive" disabled={showResult} value={fillBlankAnswer} onChange={e => setFillBlankAnswer(e.target.value)} placeholder="Type answer here..." style={{ width: '100%', padding: '1.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '15px', color: '#fff', fontSize: '1.2rem', marginBottom: '1rem' }} />
-                        {!showResult && <button className="interactive" onClick={() => processResult(fillBlankAnswer, fillBlankAnswer.toLowerCase() === question.correctAnswer.toLowerCase())} style={{ width: '100%', padding: '1rem', background: 'var(--accent-color)', color: '#000', border: 'none', borderRadius: '50px', fontWeight: 'bold', textTransform: 'uppercase' }}>Check</button>}
-                    </div>
-                )}
-
-                {showResult && (
-                    <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '15px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                            {answers[answers.length - 1]?.isCorrect ? <IconCheck size={24} color="var(--accent-color)" /> : <IconX size={24} color="#ff4b4b" />}
-                            <h3 style={{ color: answers[answers.length - 1]?.isCorrect ? 'var(--accent-color)' : '#ff4b4b' }}>
-                                {answers[answers.length - 1]?.isCorrect ? 'Correct!' : `Correct Answer: ${question.correctAnswer}`}
-                            </h3>
-                        </div>
-                        {aiExplanation && <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>{aiExplanation}</p>}
-                        <button className="interactive" onClick={handleNext} style={{ width: '100%', padding: '1rem', background: 'var(--text-color)', color: 'var(--bg-color)', border: 'none', borderRadius: '50px', fontWeight: 800, textTransform: 'uppercase' }}>Continue</button>
+                        {question.questionType === 'fill-blank' && (
+                            <div>
+                                <input 
+                                    value={answer || ''} 
+                                    onChange={e => handleFillBlank(e.target.value)} 
+                                    placeholder="INPUT ANSWER..." 
+                                    style={{ 
+                                        width: '100%', padding: '24px', background: 'var(--bg-surface)', 
+                                        border: 'var(--border-sharp)', color: '#fff', fontSize: '1.5rem', 
+                                        fontWeight: 800, outline: 'none' 
+                                    }} 
+                                />
+                            </div>
+                        )}
                     </motion.div>
-                )}
+                </AnimatePresence>
+
+                <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button 
+                        onClick={handleNext} 
+                        className="btn-primary" 
+                        style={{ padding: '16px 48px', opacity: answer === undefined ? 0.5 : 1, pointerEvents: answer === undefined ? 'none' : 'auto' }}
+                    >
+                        {currentQ < quiz.questions.length - 1 ? 'NEXT QUESTION' : 'TRANSMIT LOGS'}
+                    </button>
+                </div>
             </div>
-        </motion.div>
+        </div>
     );
 };
 

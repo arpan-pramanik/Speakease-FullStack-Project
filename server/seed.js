@@ -105,7 +105,25 @@ const seedData = async () => {
             totalLessons: 2
         });
 
-        console.log('Languages created: Spanish, French, Japanese, German, Italian, Korean, Mandarin');
+        console.log('Languages created: Spanish, French, Japanese, German, Italian, Korean, Mandarin, Russian, Arabic, Hindi');
+
+        const russian = await Language.create({
+            languageName: 'Russian', code: 'RU', level: 'Beginner',
+            description: 'Learn the most widely spoken Slavic language. Russian uses the Cyrillic alphabet and opens doors to a rich literary and scientific history.',
+            icon: '🇷🇺', totalLessons: 1
+        });
+
+        const arabic = await Language.create({
+            languageName: 'Arabic', code: 'AR', level: 'Beginner',
+            description: 'Discover Arabic, a beautifully complex right-to-left language spoken by over 400 million people across the Middle East and North Africa.',
+            icon: '🇸🇦', totalLessons: 1
+        });
+
+        const hindi = await Language.create({
+            languageName: 'Hindi', code: 'HI', level: 'Beginner',
+            description: 'Explore Hindi, written in the elegant Devanagari script. It is the heart of India\'s vibrant culture and booming economy.',
+            icon: '🇮🇳', totalLessons: 1
+        });
 
         // ===================== SPANISH LESSONS =====================
         const spLesson1 = await Lesson.create({
@@ -513,6 +531,51 @@ const seedData = async () => {
                     { word: '一', translation: 'One', pronunciation: 'Yī' }, { word: '二', translation: 'Two', pronunciation: 'Èr' },
                     { word: '三', translation: 'Three', pronunciation: 'Sān' }, { word: '四', translation: 'Four', pronunciation: 'Sì' },
                     { word: '五', translation: 'Five', pronunciation: 'Wǔ' }, { word: '十', translation: 'Ten', pronunciation: 'Shí' },
+                ]
+            }
+        });
+
+        // ===================== RUSSIAN LESSONS =====================
+        const ruLesson1 = await Lesson.create({
+            title: 'Приветствия — Greetings',
+            description: 'Learn basic Russian greetings and introductions.',
+            languageId: russian._id, difficulty: 'Beginner', order: 1, estimatedMinutes: 10, xpReward: 25,
+            content: {
+                vocabulary: [
+                    { word: 'Привет', translation: 'Hi', pronunciation: 'Pri-VYET' },
+                    { word: 'Здравствуйте', translation: 'Hello (formal)', pronunciation: 'ZDRAST-vooy-tyeh' },
+                    { word: 'Спасибо', translation: 'Thank you', pronunciation: 'Spa-SEE-ba' },
+                    { word: 'Пожалуйста', translation: 'Please / You\'re welcome', pronunciation: 'Pa-ZHAL-sta' }
+                ]
+            }
+        });
+
+        // ===================== ARABIC LESSONS =====================
+        const arLesson1 = await Lesson.create({
+            title: 'التحيات — Greetings',
+            description: 'Learn fundamental Arabic greetings.',
+            languageId: arabic._id, difficulty: 'Beginner', order: 1, estimatedMinutes: 10, xpReward: 25,
+            content: {
+                vocabulary: [
+                    { word: 'مرحباً', translation: 'Hello', pronunciation: 'Mar-ha-ban' },
+                    { word: 'شكراً', translation: 'Thank you', pronunciation: 'Shuk-ran' },
+                    { word: 'نعم', translation: 'Yes', pronunciation: 'Na-am' },
+                    { word: 'لا', translation: 'No', pronunciation: 'La' }
+                ]
+            }
+        });
+
+        // ===================== HINDI LESSONS =====================
+        const hiLesson1 = await Lesson.create({
+            title: 'नमस्ते — Greetings',
+            description: 'Learn essential Hindi greetings.',
+            languageId: hindi._id, difficulty: 'Beginner', order: 1, estimatedMinutes: 10, xpReward: 25,
+            content: {
+                vocabulary: [
+                    { word: 'नमस्ते', translation: 'Hello', pronunciation: 'Na-mas-te' },
+                    { word: 'धन्यवाद', translation: 'Thank you', pronunciation: 'Dhan-ya-vaad' },
+                    { word: 'हाँ', translation: 'Yes', pronunciation: 'Haan' },
+                    { word: 'नहीं', translation: 'No', pronunciation: 'Na-hin' }
                 ]
             }
         });

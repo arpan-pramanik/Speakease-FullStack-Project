@@ -55,8 +55,8 @@ router.get('/', protect, adminOnly, async (req, res) => {
     }
 });
 
-// @route   POST /api/lessons (Admin)
-router.post('/', protect, adminOnly, async (req, res) => {
+// @route   POST /api/lessons (AI Generation & Admin)
+router.post('/', protect, async (req, res) => {
     try {
         const lesson = await Lesson.create(req.body);
 
