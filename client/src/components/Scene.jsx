@@ -70,7 +70,7 @@ export const Scene = () => {
                 <AmbientEnvironment />
                 <EffectComposer disableNormalPass>
                     <Bloom luminanceThreshold={0.2} mipmapBlur intensity={1.5} radius={0.5} />
-                    <Noise opacity={0.05} />
+                    <Noise opacity={0.25} />
                     <Vignette eskil={false} offset={0.1} darkness={1.1} />
                 </EffectComposer>
             </Canvas>
