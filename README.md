@@ -47,6 +47,7 @@ SpeakEase is a high-fidelity, immersive language learning platform that combines
    MONGO_URI=your_mongodb_uri
    JWT_SECRET=your_jwt_secret
    MISTRAL_API_KEY=your_mistral_key
+   GOOGLE_CLIENT_ID=your_google_oauth_client_id
    ```
 
 3. **Setup Client**:
@@ -56,7 +57,9 @@ SpeakEase is a high-fidelity, immersive language learning platform that combines
    ```
    Create a `.env` file in the `client` directory:
    ```env
+   VITE_API_URL=http://localhost:5000/api
    VITE_MISTRAL_API_KEY=your_mistral_key
+   VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id
    ```
 
 4. **Seed the Database**:

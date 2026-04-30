@@ -2,7 +2,7 @@
 
 ## Project Architecture
 
-The SpeakEase project follows a modern MERN (MongoDB, Express, React, Node.js) stack architecture augmented with WebGL for 3D rendering.
+The SpeakEase project follows a modern MERN (MongoDB, Express, React, Node.js) stack architecture augmented with WebGL for 3D rendering and Google OAuth 2.0 for seamless authentication.
 
 ```mermaid
 graph TD
@@ -15,8 +15,9 @@ graph TD
     end
 
     subgraph Backend [Backend Node.js / Express]
-        API[Express REST API API Routes]
-        Auth[JWT Authentication]
+        API[Express REST API]
+        Auth[JWT Authentication & Google OAuth]
+        Admin[Admin Dashboard Routes]
         Controllers[Business Logic / Controllers]
         Models[Mongoose Data Models]
     end
@@ -25,21 +26,33 @@ graph TD
         MongoDB[(MongoDB NoSQL Database)]
     end
 
+    subgraph External [External Services]
+        GoogleOAuth[Google OAuth Provider]
+        MistralAI[Mistral AI Service]
+    end
+
     Client -->|HTTP Requests / JSON| Frontend
+    Client -->|OAuth Token Request| GoogleOAuth
+    GoogleOAuth -->|Credential| Client
     Frontend -->|Axios REST Calls| API
     UI --> State
     ThreeJS --> UI
     GSAP --> UI
     API --> Auth
+    API --> Admin
+    API --> Controllers
+    Controllers --> MistralAI
     Auth --> Controllers
+    Admin --> Controllers
     Controllers --> Models
     Models -->|Mongoose Queries| MongoDB
 ```
 
 ### Architecture Description
-1. **Frontend**: Built using React and Vite. It utilizes React Three Fiber for the 3D 'Neural Void' cinematic background and GSAP for fluid, hardware-accelerated animations. 
-2. **Backend**: An Express.js REST API providing secure endpoints for user management, progression tracking, and content delivery. It handles business logic, scoring, and user state.
-3. **Database**: A MongoDB NoSQL database used to store flexible schemas for users, languages, structured lessons, and user progress. 
+1. **Frontend**: Built using React and Vite. It utilizes React Three Fiber for the 3D 'Neural Void' cinematic background and GSAP for fluid, hardware-accelerated animations. Google OAuth allows easy sign-in.
+2. **Backend**: An Express.js REST API providing secure endpoints for user management, progression tracking, content delivery, and an Admin panel. It features standard JWT and Google OAuth authentication.
+3. **External Services**: Uses Google's OAuth 2.0 system for login and integrates with Mistral AI for dynamic content generation.
+4. **Database**: A MongoDB NoSQL database used to store flexible schemas for users, languages, structured lessons, and user progress.
 
 ## Entity-Relationship (ER) Diagram
 
@@ -54,6 +67,7 @@ erDiagram
         String email
         String password
         String role
+        String avatar
         ObjectId selectedLanguage
         Number streakDays
         Date lastActive
@@ -108,7 +122,7 @@ erDiagram
 ```
 
 ### ER Diagram Description
-- **User**: Stores authentication and profile data, along with global XP and streak details. A user selects a default language.
+- **User**: Stores authentication and profile data. Supports users created via standard email/password or Google OAuth (using a generated random password). Includes role-based access (`user` vs `admin`).
 - **Language**: The core entity representing a language curriculum (e.g., Spanish, French). It contains multiple Lessons.
 - **Lesson**: Structured learning content linked to a specific Language. Contains vocabulary and grammar notes.
 - **Quiz**: Assessment content linked directly to a specific Lesson.
